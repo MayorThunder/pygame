@@ -42,7 +42,8 @@ attacks = {"blade_default": "stag_blade"}
 
 game_enemies = {"close_combat":
                     {"base_enemy":
-                         {"speed": 120, "ats": 1, "dmg": 200, "ats_add": 0.05, "dmg_add": 20, "speed_add": 4, "coeff": 0.1}}}
+                         {"speed": 120, "ats": 1, "hp": 1000, "dmg": 200, "ats_add": 0.05,
+                          "hp_add": 100, "dmg_add": 20, "speed_add": 4, "coeff": 0.1}}}
 
 game_weapons = {"ranks":
                     {"D":
@@ -201,6 +202,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, pl_class):
         super().__init__(player_gr, alls)
         self.image = sprite_images['player'][pl_class][0]
+        self.mask = pygame.mask.from_surface(self.image)
         k = self.image.get_rect()
         self.cl = pl_class
         self.v = classes[self.cl]["speed"]
@@ -244,14 +246,16 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, enemy_class, entype, cx, cy, spawn, roomn, lvl):
         super().__init__(enemies, alls)
         self.image = sprite_images['enemies'][entype][enemy_class][0]
+        self.mask = pygame.mask.from_surface(self.image)
         k = self.image.get_rect()
         self.cl = enemy_class
+        self.cur_hp = ((game_enemies[entype][self.cl]["hp"] + game_enemies[entype][self.cl]["hp_add"] * (roomn - 2))
+                  * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.v = ((game_enemies[entype][self.cl]["speed"] + game_enemies[entype][self.cl]["speed_add"] * (roomn - 2))
                   * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
-        print(self.v)
         self.dmg = ((game_enemies[entype][self.cl]["dmg"] + game_enemies[entype][self.cl]["dmg_add"] * (roomn - 2))
                   * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
-        self.dmg = ((game_enemies[entype][self.cl]["ats"] + game_enemies[entype][self.cl]["ats_add"] * (roomn - 2))
+        self.ats = ((game_enemies[entype][self.cl]["ats"] + game_enemies[entype][self.cl]["ats_add"] * (roomn - 2))
                     * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         dx = randint(-(sizes[spawn][0] - k.w) // 2, (sizes[spawn][0] - k.w) // 2)
         dy = (((sizes[spawn][0] - k.w) // 2) ** 2 - dx ** 2) ** 0.5
@@ -263,15 +267,27 @@ class Enemy(pygame.sprite.Sprite):
         self.timer = 0
 
     def apply(self, x, y):
+        if self.cur_hp <= 0:
+            self.kill()
         self.rect.x -= x
         self.rect.y -= y
+        if self.timer:
+            self.timer -= 1
 
-        delta = (player.inf().rect.x - self.formspr.rect.x, player.inf().rect.y - self.formspr.rect.y)
-        self.rect.x += self.v * (delta[0] // (delta[0] + delta[1] if delta[0] and delta[1] else 2 ** 0.5))
-        self.rect.y += self.v * (delta[1] // (delta[0] + delta[1] if delta[0] and delta[1] else 2 ** 0.5))
+        deltax = player.inf().rect.x - self.formspr.rect.x
+        deltay = player.inf().rect.y - self.formspr.rect.y
+        delta = (deltax ** 2 + deltay ** 2) ** 0.5
+        if deltax or deltay:
+            self.rect.x += (self.v / fps) * (deltax / delta)
+            self.formspr.rect.x += (self.v / fps) * (deltax / delta)
+            self.rect.y += (self.v / fps) * (deltay / delta)
+            self.formspr.rect.y += (self.v / fps) * (deltay / delta)
 
-        self.formspr.rect.x += self.v * (delta[0] // (delta[0] + delta[1] if delta[0] and delta[1] else 2 ** 0.5))
-        self.formspr.rect.y += self.v * (delta[1] // (delta[0] + delta[1] if delta[0] and delta[1] else 2 ** 0.5))
+    def get_damage(self, amount, time):
+        if not self.timer:
+            self.cur_hp -= amount
+            self.timer += time
+            print(self.cur_hp, self.timer)
 
 
 def generate_level(n):
@@ -365,6 +381,9 @@ class Warrior_weapon(pygame.sprite.Sprite):
                                                  self.AoE / (fps / self.ats) * self.timer * (1 if self.side else -1))
             self.rect.x = x - formx - 25
             self.rect.y = y - formy - 15
+            ret = pygame.sprite.spritecollideany(self, enemies)
+            if ret:
+                ret.get_damage(self.dmg, (fps // self.ats - self.timer) + 2)
         else:
             self.timer = 0
             self.is_attacking = False
