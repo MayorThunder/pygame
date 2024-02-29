@@ -218,12 +218,20 @@ class Player(pygame.sprite.Sprite):
             self.wall_collidable_sprite.rect.x += (classes[cur_class]["speed"] / fps) * x
         if ret[1]:
             self.wall_collidable_sprite.rect.y += (classes[cur_class]["speed"] / fps) * y
-        if self.turn and x > 0:
-            self.turn = not self.turn
-            self.image = sprite_images['player'][self.cl][0]
-        elif not self.turn and x < 0:
-            self.turn = not self.turn
-            self.image = sprite_images['player'][self.cl][1]
+        if weapon.ans_attacking():
+            if pygame.mouse.get_pos()[0] > self.rect.x and self.turn:
+                self.turn = not self.turn
+                self.image = sprite_images['player'][self.cl][0]
+            elif pygame.mouse.get_pos()[0] < self.rect.x and not self.turn:
+                self.turn = not self.turn
+                self.image = sprite_images['player'][self.cl][1]
+        else:
+            if self.turn and x > 0:
+                self.turn = not self.turn
+                self.image = sprite_images['player'][self.cl][0]
+            elif not self.turn and x < 0:
+                self.turn = not self.turn
+                self.image = sprite_images['player'][self.cl][1]
         weapon.apply(self.rect.x, self.rect.y, self.turn)
 
     def on_col(self, x, y):
@@ -287,7 +295,6 @@ class Enemy(pygame.sprite.Sprite):
         if not self.timer:
             self.cur_hp -= amount
             self.timer += time
-            print(self.cur_hp, self.timer)
 
 
 def generate_level(n):
@@ -398,6 +405,9 @@ class Warrior_weapon(pygame.sprite.Sprite):
             self.position = "attack"
             self.image = sprite_images["war_weapons"][self.position][self.weapon][1 if self.side else 0]
             self.is_attacking = True
+
+    def ans_attacking(self):
+        return self.is_attacking
 
 
 def terminate():
