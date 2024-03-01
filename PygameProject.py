@@ -11,6 +11,7 @@ weapon_gr = pygame.sprite.Group()
 floor_bricks = pygame.sprite.Group()
 form_rects = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
+close_combat_enemies = pygame.sprite.Group()
 rooms = pygame.sprite.Group()
 
 
@@ -34,16 +35,18 @@ floor_count = {"stand_room": sizes["stand_room"][0] // sizes["floor"][1],
                "corridor_height": sizes["corridor"][1] // sizes["floor"][1],
                "corridor_width": sizes["corridor"][0] // sizes["floor"][1]}
 button_inf = {"w": 565, "h": 78, "x": 676, "y": [384, 535]}
-classes = {"warrior": {"speed": 360, "hp": 800},
-           "mage": {"speed": 240, "hp": 600},
-           "ranger": {"speed": 300, "hp": 450}}
+classes = {"warrior": {"speed": 180, "hp": 800, "protection": 0.5},
+           "mage": {"speed": 240, "hp": 600, "protection": 0.5},
+           "ranger": {"speed": 300, "hp": 450, "protection": 0.5}}
+
+fon_set = None
 
 attacks = {"blade_default": "stag_blade"}
 
 game_enemies = {"close_combat":
                     {"base_enemy":
-                         {"speed": 120, "ats": 1, "hp": 1000, "dmg": 200, "ats_add": 0.05,
-                          "hp_add": 100, "dmg_add": 20, "speed_add": 4, "coeff": 0.1}}}
+                         {"speed": 150, "ats": 1, "hp": 1000, "contact_dmg": 100, "ats_add": 0.05,
+                          "hp_add": 100, "contact_dmg_add": 10, "speed_add": 4, "coeff": 0.1}}}
 
 game_weapons = {"ranks":
                     {"D":
@@ -71,6 +74,10 @@ game_weapons = {"ranks":
                                 {"swords":
                                      {"stag_blade":
                                           {"size": 1.8, "dmg": 550, "ats": 3.1, "AoE": 180}}}}}}
+
+damage_col = {"weapons":
+                  {"warrior": "orange"},
+              "close_combat": "red"}
 
 levels_size = {
     1: (7 * sizes["stand_room"][0] + 6 * sizes["corridor"][0] + 100,
@@ -175,7 +182,7 @@ class Room(pygame.sprite.Sprite):
             for k, v in enemiy_spawn[self.lvl]["close_combat"]["standart"].items():
                 for _ in range(randint(*v)):
                     print("...")
-                    Enemy(k, "close_combat", self.cx, self.cy, "stand_room", self.num, self.lvl)
+                    Close_Combat_Enemy(k, "close_combat", self.cx, self.cy, "stand_room", self.num, self.lvl)
 
 
 class Wall(pygame.sprite.Sprite):
@@ -198,6 +205,11 @@ class FormalRect(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, w, h)
 
 
+def anihillation():
+    global fon_set
+    fon_set = "death"
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, pl_class):
         super().__init__(player_gr, alls)
@@ -209,11 +221,17 @@ class Player(pygame.sprite.Sprite):
         self.cur_hp = classes[self.cl]["hp"]
         self.rect = k.move(SX // 2 - k.w // 2, SY // 2 - k.h // 2)
         self.turn = False
+        self.protection = classes[self.cl]["protection"] * fps
+        self.timer = 0
         self.wall_collidable_sprite = FormalRect(levels_size[1][0] // 2 - k.w // 2, levels_size[1][1] // 2 - k.h // 2,
                                                  k.w, k.h)
 
     def move(self, x, y):
         ret = self.on_col(x, y)
+        if self.cur_hp < 0:
+            anihillation()
+        if self.timer:
+            self.timer -= 1
         if ret[0]:
             self.wall_collidable_sprite.rect.x += (classes[cur_class]["speed"] / fps) * x
         if ret[1]:
@@ -249,22 +267,28 @@ class Player(pygame.sprite.Sprite):
     def inf(self):
         return self.wall_collidable_sprite
 
+    def get_damage(self, amount):
+        if not self.timer:
+            print(self.cur_hp)
+            self.timer += 30
+            self.cur_hp -= randint(int(0.9 * amount), int(1.1 * amount))
 
-class Enemy(pygame.sprite.Sprite):
+
+class Close_Combat_Enemy(pygame.sprite.Sprite):
     def __init__(self, enemy_class, entype, cx, cy, spawn, roomn, lvl):
-        super().__init__(enemies, alls)
-        self.image = sprite_images['enemies'][entype][enemy_class][0]
-        self.mask = pygame.mask.from_surface(self.image)
-        k = self.image.get_rect()
+        super().__init__(enemies, close_combat_enemies)
         self.cl = enemy_class
         self.cur_hp = ((game_enemies[entype][self.cl]["hp"] + game_enemies[entype][self.cl]["hp_add"] * (roomn - 2))
                   * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.v = ((game_enemies[entype][self.cl]["speed"] + game_enemies[entype][self.cl]["speed_add"] * (roomn - 2))
                   * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
-        self.dmg = ((game_enemies[entype][self.cl]["dmg"] + game_enemies[entype][self.cl]["dmg_add"] * (roomn - 2))
+        self.dmg = ((game_enemies[entype][self.cl]["contact_dmg"] + game_enemies[entype][self.cl]["contact_dmg_add"] * (roomn - 2))
                   * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.ats = ((game_enemies[entype][self.cl]["ats"] + game_enemies[entype][self.cl]["ats_add"] * (roomn - 2))
                     * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
+        self.image = pygame.transform.scale_by(sprite_images['enemies'][entype][enemy_class][0], (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
+        self.mask = pygame.mask.from_surface(self.image)
+        k = self.image.get_rect()
         dx = randint(-(sizes[spawn][0] - k.w) // 2, (sizes[spawn][0] - k.w) // 2)
         dy = (((sizes[spawn][0] - k.w) // 2) ** 2 - dx ** 2) ** 0.5
         print(f"dx:{dx}, dy:{dy}, cx:{cx}, cy:{cy}, rect:{player.inf().rect}")
@@ -272,15 +296,22 @@ class Enemy(pygame.sprite.Sprite):
         self.formspr = FormalRect(cx + dx, cy + dy, k.w, k.h)
         self.rect = k.move(cx + dx - player.inf().rect.x + SX // 2 - 50, cy + dy - player.inf().rect.y + SY // 2 - 50)
         self.turn = False
-        self.timer = 0
+        self.dmg_timer = 0
+        self.attack_timer = 0
 
     def apply(self, x, y):
         if self.cur_hp <= 0:
             self.kill()
+        ret = pygame.sprite.spritecollideany(self, player_gr)
+        if ret and not self.attack_timer:
+            self.attack_timer = fps // self.ats + 1
+            ret.get_damage(self.dmg)
+        elif self.attack_timer:
+            self.attack_timer -= 1
         self.rect.x -= x
         self.rect.y -= y
-        if self.timer:
-            self.timer -= 1
+        if self.dmg_timer:
+            self.dmg_timer -= 1
 
         deltax = player.inf().rect.x - self.formspr.rect.x
         deltay = player.inf().rect.y - self.formspr.rect.y
@@ -291,10 +322,13 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.y += (self.v / fps) * (deltay / delta)
             self.formspr.rect.y += (self.v / fps) * (deltay / delta)
 
-    def get_damage(self, amount, time):
-        if not self.timer:
-            self.cur_hp -= amount
-            self.timer += time
+    def get_damage(self, amount, time, weap_connected_to_class):
+        if not self.dmg_timer:
+            real_dmg = randint(int(0.9 * amount), int(1.1 * amount))
+            damage.add_to_showlist(damage_col["weapons"][weap_connected_to_class],
+                                   self.rect.x, self.rect.y - 1.5 * self.rect.h, real_dmg)
+            self.cur_hp -= real_dmg
+            self.dmg_timer += time
 
 
 def generate_level(n):
@@ -358,6 +392,7 @@ class Warrior_weapon(pygame.sprite.Sprite):
         self.is_attacking = False
         self.side = False
         self.rank = rank
+        self.connect_to_class = "warrior"
         self.weapon = weap
         self.weapon_class = weap_cl
         self.image = sprite_images["war_weapons"][self.position][self.weapon][0]
@@ -390,7 +425,7 @@ class Warrior_weapon(pygame.sprite.Sprite):
             self.rect.y = y - formy - 15
             ret = pygame.sprite.spritecollideany(self, enemies)
             if ret:
-                ret.get_damage(self.dmg, (fps // self.ats - self.timer) + 2)
+                ret.get_damage(self.dmg, (fps // self.ats - self.timer) + 2, self.connect_to_class)
         else:
             self.timer = 0
             self.is_attacking = False
@@ -408,6 +443,29 @@ class Warrior_weapon(pygame.sprite.Sprite):
 
     def ans_attacking(self):
         return self.is_attacking
+
+
+class Damage():
+    def __init__(self):
+        self.damage_show_list = []
+        self.max_time = 60
+
+    def add_to_showlist(self, col, x, y, n):
+        font = pygame.font.Font(None, 40)
+        text = font.render(str(n), True, col)
+        self.damage_show_list.append([text, (x, y), self.max_time])
+
+    def apply(self):
+        x = self.damage_show_list
+        deleting = []
+        for i in range(len(x)):
+            if x[i][2]:
+                screen.blit(x[i][0], x[i][1])
+                x[i][2] -= 1
+            else:
+                deleting.append(i)
+        for i in deleting:
+            self.damage_show_list.pop(i)
 
 
 def terminate():
@@ -455,6 +513,7 @@ if __name__ == "__main__":
                                          {"stag_blade": [get_image("Stagnum_blade_attack.png", True),
                                                          pygame.transform.flip(
                                                              get_image("Stagnum_blade_attack.png", True), 1, 0)]}}}
+    damage = Damage()
     screen_x = -levels_size[1][0] // 2 + SX // 2
     screen_y = -levels_size[1][1] // 2 + SY // 2
     count = 0
@@ -510,9 +569,17 @@ if __name__ == "__main__":
                 elif fon_set == "game" and event.button == pygame.BUTTON_LEFT:
                     weapon.attack()
 
-        if fon_set == "start" and count % 6:
+        if fon_set == "death":
+            for i in alls:
+                i.kill()
+            screen.fill("black")
+            screen_add.fill("black")
+            font = pygame.font.Font(None, 200)
+            text = font.render("You died", True, (255, 100, 100))
+            screen.blit(text, (SX // 2 - 300, SY // 2 - 100))
+        elif fon_set == "start" and count % 6:
             screen.blit(data_fon["start"][(count // 6) % 3], (0, 0))
-        if fon_set == "game":
+        elif fon_set == "game":
             res = player.on_col(dx, dy)
             if res[0]:
                 screen_x -= (classes[cur_class]["speed"] / fps) * dx
@@ -528,5 +595,6 @@ if __name__ == "__main__":
                 i.apply(((classes[cur_class]["speed"] / fps) * dx if res[0] else 0),
                 ((classes[cur_class]["speed"] / fps) * dy if res[1] else 0))
             enemies.draw(screen)
+            damage.apply()
         pygame.display.flip()
         clock.tick(fps)
