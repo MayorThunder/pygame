@@ -53,27 +53,27 @@ game_weapons = {"ranks":
                          {"warrior":
                               {"swords":
                                    {"stag_blade":
-                                        {"size": 1, "dmg": 300, "ats": 2, "AoE": 135}}}},
+                                        {"size": 1.1, "dmg": 250, "ats": 2.1, "AoE": 135}}}},
                      "C": {"warrior":
                                {"swords":
                                     {"stag_blade":
-                                         {"size": 1.2, "dmg": 350, "ats": 2, "AoE": 135}}}},
+                                         {"size": 1.3, "dmg": 280, "ats": 2.2, "AoE": 135}}}},
                      "B": {"warrior":
                                {"swords":
                                     {"stag_blade":
-                                         {"size": 1.3, "dmg": 400, "ats": 2.2, "AoE": 155}}}},
+                                         {"size": 1.4, "dmg": 310, "ats": 2.3, "AoE": 155}}}},
                      "A": {"warrior":
                                {"swords":
                                     {"stag_blade":
-                                         {"size": 1.5, "dmg": 420, "ats": 2.5, "AoE": 155}}}},
+                                         {"size": 1.5, "dmg": 350, "ats": 2.5, "AoE": 155}}}},
                      "S": {"warrior":
                                {"swords":
                                     {"stag_blade":
-                                         {"size": 1.7, "dmg": 440, "ats": 2.8, "AoE": 155}}}},
+                                         {"size": 1.6, "dmg": 400, "ats": 2.7, "AoE": 155}}}},
                      "SS": {"warrior":
                                 {"swords":
                                      {"stag_blade":
-                                          {"size": 1.8, "dmg": 550, "ats": 3.1, "AoE": 180}}}}}}
+                                          {"size": 1.8, "dmg": 450, "ats": 3.1, "AoE": 180}}}}}}
 
 damage_col = {"weapons":
                   {"warrior": "orange"},
@@ -86,8 +86,8 @@ levels_size = {
 levels = {1: {"size": (7, 7), "iters": [[2], [2, 2], [3, 4]]}}
 
 enemiy_spawn = {1: {"close_combat":
-                   {"standart":
-                       {"base_enemy": (3, 4)}}}}
+                        {"standart":
+                             {"base_enemy": (3, 4)}}}}
 
 doors = {(0, -1): "hu", (-1, 0): "vl", (1, 0): "vr", (0, 1): "hd"}
 
@@ -111,8 +111,8 @@ class Room(pygame.sprite.Sprite):
         self.typer = typer
         self.num = num
         self.was = False
-        self.rect = pygame.Rect(cx - sizes["stand_room"][0] // 2, cy - sizes["stand_room"][1] // 2,
-                                sizes["stand_room"][0], sizes["stand_room"][1])
+        self.rect = pygame.Rect(cx - sizes["stand_room"][0] // 2 + 50, cy - sizes["stand_room"][1] // 2 + 50,
+                                sizes["stand_room"][0] - 50, sizes["stand_room"][1] - 50)
         if empty:
             self.empty = empty
         if typer == "start" or typer == "stand" or typer == "portal" or typer == "unusual":
@@ -250,6 +250,7 @@ class Player(pygame.sprite.Sprite):
             elif not self.turn and x < 0:
                 self.turn = not self.turn
                 self.image = sprite_images['player'][self.cl][1]
+        player_health_bar.apply(self.cur_hp)
         weapon.apply(self.rect.x, self.rect.y, self.turn)
 
     def on_col(self, x, y):
@@ -267,26 +268,74 @@ class Player(pygame.sprite.Sprite):
     def inf(self):
         return self.wall_collidable_sprite
 
-    def get_damage(self, amount):
+    def get_damage(self, amount, entype):
         if not self.timer:
-            print(self.cur_hp)
+            real_dmg = randint(int(0.9 * amount), int(1.1 * amount))
+            damage.add_to_showlist(damage_col[entype],
+                                   self.rect.x, self.rect.y - 1.5 * self.rect.h, real_dmg)
+            self.cur_hp -= real_dmg
             self.timer += 30
-            self.cur_hp -= randint(int(0.9 * amount), int(1.1 * amount))
+
+
+class PlayerHealthBar():
+    def __init__(self, x, y, hp):
+        self.max_hp = hp
+        self.x = x
+        self.y = y
+        self.health_bar_size = (46, 28)
+        self.left_bar = sprite_images['bars']["player"]["left"]
+        self.left_bar_rect = self.left_bar.get_rect()
+        self.medium_bar = sprite_images['bars']["player"]["medium"]
+        self.medium_bar_rect = self.medium_bar.get_rect()
+        self.right_bar = sprite_images['bars']["player"]["right"]
+        self.right_bar_rect = self.right_bar.get_rect()
+
+    def apply(self, hp):
+        screen.blit(self.left_bar, (self.x, self.y))
+        pygame.draw.rect(screen, "black",
+                         (self.x + 3, self.y + 3, *self.health_bar_size))
+        pygame.draw.rect(screen, (146, 0, 10),
+                         (self.x + 3, self.y + 3, self.health_bar_size[0] * (1 if hp >= 50 else hp / 50),
+                          self.health_bar_size[1]))
+        for i in range(self.max_hp // 50 - 2):
+            screen.blit(self.medium_bar, (self.x + i * self.medium_bar_rect.w + self.left_bar_rect.w, self.y))
+            pygame.draw.rect(screen, "black",
+                             (self.x + i * self.medium_bar_rect.w + self.left_bar_rect.w + 1,
+                              self.y + 3, *self.health_bar_size))
+            if hp > (i + 1) * 50:
+                pygame.draw.rect(screen, (146, 0, 10), (self.x + i * self.medium_bar_rect.w + self.left_bar_rect.w + 1,
+                              self.y + 3, self.health_bar_size[0] * (1 if hp > (i + 2) * 50 else (hp - (i + 1) * 50) / 50),
+                              self.health_bar_size[1]))
+        screen.blit(self.right_bar, (self.x + (self.max_hp // 50 - 2) * self.medium_bar_rect.w + self.left_bar_rect.w, self.y))
+        pygame.draw.rect(screen, "black",
+                         (self.x + (self.max_hp // 50 - 2) * self.medium_bar_rect.w + self.left_bar_rect.w + 1,
+                          self.y + 3, *self.health_bar_size))
+        if hp > self.max_hp - 50:
+            pygame.draw.rect(screen, (146, 0, 10),
+                             (self.x + (self.max_hp // 50 - 2) * self.medium_bar_rect.w + self.left_bar_rect.w + 1,
+                              self.y + 3, self.health_bar_size[0] * (1 if hp == self.max_hp else (self.max_hp - hp) / 50),
+                              self.health_bar_size[1]))
+
+    def change(self, hp):
+        self.max_hp = hp
 
 
 class Close_Combat_Enemy(pygame.sprite.Sprite):
     def __init__(self, enemy_class, entype, cx, cy, spawn, roomn, lvl):
         super().__init__(enemies, close_combat_enemies)
         self.cl = enemy_class
+        self.entype = entype
         self.cur_hp = ((game_enemies[entype][self.cl]["hp"] + game_enemies[entype][self.cl]["hp_add"] * (roomn - 2))
-                  * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
+                       * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.v = ((game_enemies[entype][self.cl]["speed"] + game_enemies[entype][self.cl]["speed_add"] * (roomn - 2))
                   * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
-        self.dmg = ((game_enemies[entype][self.cl]["contact_dmg"] + game_enemies[entype][self.cl]["contact_dmg_add"] * (roomn - 2))
-                  * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
+        self.dmg = ((game_enemies[entype][self.cl]["contact_dmg"] + game_enemies[entype][self.cl]["contact_dmg_add"] * (
+                    roomn - 2))
+                    * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.ats = ((game_enemies[entype][self.cl]["ats"] + game_enemies[entype][self.cl]["ats_add"] * (roomn - 2))
                     * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
-        self.image = pygame.transform.scale_by(sprite_images['enemies'][entype][enemy_class][0], (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
+        self.image = pygame.transform.scale_by(sprite_images['enemies'][entype][enemy_class][0],
+                                               (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.mask = pygame.mask.from_surface(self.image)
         k = self.image.get_rect()
         dx = randint(-(sizes[spawn][0] - k.w) // 2, (sizes[spawn][0] - k.w) // 2)
@@ -305,7 +354,7 @@ class Close_Combat_Enemy(pygame.sprite.Sprite):
         ret = pygame.sprite.spritecollideany(self, player_gr)
         if ret and not self.attack_timer:
             self.attack_timer = fps // self.ats + 1
-            ret.get_damage(self.dmg)
+            ret.get_damage(self.dmg, self.entype)
         elif self.attack_timer:
             self.attack_timer -= 1
         self.rect.x -= x
@@ -420,7 +469,7 @@ class Warrior_weapon(pygame.sprite.Sprite):
             self.timer += 1
             self.image = pygame.transform.rotate(pygame.transform.scale_by(
                 sprite_images["war_weapons"][self.position][self.weapon][1 if self.side else 0], self.size),
-                                                 self.AoE / (fps / self.ats) * self.timer * (1 if self.side else -1))
+                self.AoE / (fps / self.ats) * self.timer * (1 if self.side else -1))
             self.rect.x = x - formx - 25
             self.rect.y = y - formy - 15
             ret = pygame.sprite.spritecollideany(self, enemies)
@@ -490,6 +539,10 @@ if __name__ == "__main__":
                                "hd": pygame.transform.rotate(get_image('Wall_brick_horizontal.png', False), 180),
                                "vl": get_image('Wall_brick_vertical.png', False),
                                "vr": pygame.transform.rotate(get_image('Wall_brick_vertical.png', False), 180)},
+                     'bars': {"player":
+                                  {"left": get_image("Health_bar_left.png", True),
+                                   "medium": get_image("Health_bar_medium.png", True),
+                                   "right": get_image("Health_bar_right.png", True)}},
                      'floor': {1: get_image('Floor_brick_1.png', False),
                                2: get_image('Floor_brick_2.png', False),
                                3: get_image('Floor_brick_3.png', False)},
@@ -561,11 +614,12 @@ if __name__ == "__main__":
                         if cur_class == "warrior":
                             cur_weap = "stag_blade"
                             weapon_class = "swords"
-                            cur_rank = "SS"
+                            cur_rank = "S"
                             player = Player("warrior")
                             for i in walls:
                                 walls[i].draw(screen_add)
                             weapon = Warrior_weapon(cur_rank, cur_weap, weapon_class)
+                        player_health_bar = PlayerHealthBar(200, 150, classes[cur_class]["hp"])
                 elif fon_set == "game" and event.button == pygame.BUTTON_LEFT:
                     weapon.attack()
 
@@ -593,7 +647,7 @@ if __name__ == "__main__":
                 i.check()
             for i in enemies:
                 i.apply(((classes[cur_class]["speed"] / fps) * dx if res[0] else 0),
-                ((classes[cur_class]["speed"] / fps) * dy if res[1] else 0))
+                        ((classes[cur_class]["speed"] / fps) * dy if res[1] else 0))
             enemies.draw(screen)
             damage.apply()
         pygame.display.flip()
