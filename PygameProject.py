@@ -11,8 +11,10 @@ weapon_gr = pygame.sprite.Group()
 floor_bricks = pygame.sprite.Group()
 form_rects = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
+portals = pygame.sprite.Group()
 close_combat_enemies = pygame.sprite.Group()
 rooms = pygame.sprite.Group()
+transition_killable = pygame.sprite.Group()
 
 
 def get_image(name, k):
@@ -61,27 +63,29 @@ game_weapons = {"ranks":
                      "B": {"warrior":
                                {"swords":
                                     {"stag_blade":
-                                         {"size": 1.4, "dmg": 310, "ats": 2.3, "AoE": 155}}}},
+                                         {"size": 1.4, "dmg": 310, "ats": 2.3, "AoE": 135}}}},
                      "A": {"warrior":
                                {"swords":
                                     {"stag_blade":
-                                         {"size": 1.5, "dmg": 350, "ats": 2.5, "AoE": 155}}}},
+                                         {"size": 1.5, "dmg": 350, "ats": 2.5, "AoE": 135}}}},
                      "S": {"warrior":
                                {"swords":
                                     {"stag_blade":
-                                         {"size": 1.6, "dmg": 400, "ats": 2.7, "AoE": 155}}}},
+                                         {"size": 1.6, "dmg": 400, "ats": 2.7, "AoE": 135}}}},
                      "SS": {"warrior":
                                 {"swords":
                                      {"stag_blade":
-                                          {"size": 1.8, "dmg": 450, "ats": 3.1, "AoE": 180}}}}}}
+                                          {"size": 1.8, "dmg": 450, "ats": 3.1, "AoE": 135}}}}}}
 
 damage_col = {"weapons":
                   {"warrior": "orange"},
               "close_combat": "red"}
 
+spawn_const = 200
+
 levels_size = {
-    1: (7 * sizes["stand_room"][0] + 6 * sizes["corridor"][0] + 100,
-        7 * sizes["stand_room"][1] + 6 * sizes["corridor"][0] + 100)}
+    1: (7 * sizes["stand_room"][0] + 6 * sizes["corridor"][0] + spawn_const,
+        7 * sizes["stand_room"][1] + 6 * sizes["corridor"][0] + spawn_const)}
 
 levels = {1: {"size": (7, 7), "iters": [[2], [2, 2], [3, 4]]}}
 
@@ -104,7 +108,7 @@ def iff(n):
 
 class Room(pygame.sprite.Sprite):
     def __init__(self, typer, cx, cy, lvl, num=None, empty=None):
-        super().__init__(rooms, alls)
+        super().__init__(rooms, alls, transition_killable)
         self.cx = cx
         self.cy = cy
         self.lvl = lvl
@@ -169,6 +173,9 @@ class Room(pygame.sprite.Sprite):
                      (i - d) * sizes["wall"][1],
                      "vr", cx, cy)
 
+        if typer == "portal":
+            Portal(cx, cy, "room_transition")
+
     def inf(self):
         return {"centre": (self.cx, self.cy), "type": self.typer}
 
@@ -187,7 +194,7 @@ class Room(pygame.sprite.Sprite):
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, d_x, d_y, wall_type, centre_x, centre_y):
-        super().__init__(walls[wall_type], alls)
+        super().__init__(walls[wall_type], alls, transition_killable)
         self.image = sprite_images["walls"][wall_type]
         self.rect = self.image.get_rect().move(centre_x + d_x, centre_y + d_y)
 
@@ -276,6 +283,21 @@ class Player(pygame.sprite.Sprite):
             self.cur_hp -= real_dmg
             self.timer += 30
 
+    def kill(self):
+        self.wall_collidable_sprite.kill()
+        super().kill()
+
+
+class Portal(pygame.sprite.Sprite):
+    def __init__(self, x, y, port_type):
+        super().__init__(alls, portals, transition_killable)
+        self.image = sprite_images['portals'][port_type]
+        k = self.image.get_rect()
+        self.rect = pygame.Rect(x - k.w // 2, y - k.h // 2, k.w, k.h)
+
+    def check(self):
+        return player.inf().rect.colliderect(self.rect) and self.rect.collidepoint(pygame.mouse.get_pos())
+
 
 class PlayerHealthBar():
     def __init__(self, x, y, hp):
@@ -322,7 +344,7 @@ class PlayerHealthBar():
 
 class Close_Combat_Enemy(pygame.sprite.Sprite):
     def __init__(self, enemy_class, entype, cx, cy, spawn, roomn, lvl):
-        super().__init__(enemies, close_combat_enemies)
+        super().__init__(enemies, close_combat_enemies, transition_killable)
         self.cl = enemy_class
         self.entype = entype
         self.cur_hp = ((game_enemies[entype][self.cl]["hp"] + game_enemies[entype][self.cl]["hp_add"] * (roomn - 2))
@@ -379,6 +401,10 @@ class Close_Combat_Enemy(pygame.sprite.Sprite):
             self.cur_hp -= real_dmg
             self.dmg_timer += time
 
+    def kill(self):
+        self.formspr.kill()
+        super().kill()
+
 
 def generate_level(n):
     s = levels[n]["size"]
@@ -418,8 +444,8 @@ def generate_level(n):
                         if data[a + x][b + y] and abs(data[a + x][b + y] - data[a][b]) == 1:
                             emptiness.append(doors[(y, x)])
                             Room((y, x),
-                                 (b + 0.5 + y * 0.5) * sizes["stand_room"][0] + (b + 0.5 * y) * sizes["corridor"][0],
-                                 (a + 0.5 + x * 0.5) * sizes["stand_room"][1] + (a + 0.5 * x) * sizes["corridor"][0], n)
+                                 (b + 0.5 + y * 0.5) * sizes["stand_room"][0] + (b + 0.5 * y) * sizes["corridor"][0] + spawn_const // 2,
+                                 (a + 0.5 + x * 0.5) * sizes["stand_room"][1] + (a + 0.5 * x) * sizes["corridor"][0] + spawn_const // 2, n)
                 name = None
                 if types[a][b] == 1:
                     name = "start"
@@ -429,9 +455,12 @@ def generate_level(n):
                     name = "unusual"
                 elif types[a][b] == 4:
                     name = "portal"
-                Room(name, (b + 0.5) * sizes["stand_room"][0] + b * sizes["corridor"][0],
-                     (a + 0.5) * sizes["stand_room"][1] + a * sizes["corridor"][0], n, num=data[a][b], empty=emptiness)
+                Room(name, (b + 0.5) * sizes["stand_room"][0] + b * sizes["corridor"][0] + spawn_const // 2,
+                     (a + 0.5) * sizes["stand_room"][1] + a * sizes["corridor"][0] + spawn_const // 2, n, num=data[a][b], empty=emptiness)
                 emptiness.clear()
+    for i in walls:
+        walls[i].draw(screen_add)
+    portals.draw(screen_add)
 
 
 class Warrior_weapon(pygame.sprite.Sprite):
@@ -539,6 +568,7 @@ if __name__ == "__main__":
                                "hd": pygame.transform.rotate(get_image('Wall_brick_horizontal.png', False), 180),
                                "vl": get_image('Wall_brick_vertical.png', False),
                                "vr": pygame.transform.rotate(get_image('Wall_brick_vertical.png', False), 180)},
+                     'portals': {"room_transition": get_image("Portal.png", True)},
                      'bars': {"player":
                                   {"left": get_image("Health_bar_left.png", True),
                                    "medium": get_image("Health_bar_medium.png", True),
@@ -570,6 +600,7 @@ if __name__ == "__main__":
     screen_x = -levels_size[1][0] // 2 + SX // 2
     screen_y = -levels_size[1][1] // 2 + SY // 2
     count = 0
+    cur_lvl = None
     dx = 0
     dy = 0
     while True:
@@ -614,14 +645,21 @@ if __name__ == "__main__":
                         if cur_class == "warrior":
                             cur_weap = "stag_blade"
                             weapon_class = "swords"
-                            cur_rank = "S"
+                            cur_rank = "SS"
                             player = Player("warrior")
-                            for i in walls:
-                                walls[i].draw(screen_add)
                             weapon = Warrior_weapon(cur_rank, cur_weap, weapon_class)
                         player_health_bar = PlayerHealthBar(200, 150, classes[cur_class]["hp"])
                 elif fon_set == "game" and event.button == pygame.BUTTON_LEFT:
-                    weapon.attack()
+                    for portal in portals:
+                        if portal.check():
+                            cur_lvl += 1
+                            for i in transition_killable:
+                                i.kill()
+                            screen_add.fill("black")
+                            generate_level(cur_lvl)
+                            break
+                    else:
+                        weapon.attack()
 
         if fon_set == "death":
             for i in alls:
