@@ -37,7 +37,7 @@ floor_count = {"stand_room": sizes["stand_room"][0] // sizes["floor"][1],
                "corridor_height": sizes["corridor"][1] // sizes["floor"][1],
                "corridor_width": sizes["corridor"][0] // sizes["floor"][1]}
 button_inf = {"w": 565, "h": 78, "x": 676, "y": [384, 535]}
-classes = {"warrior": {"speed": 180, "hp": 800, "protection": 0.5},
+classes = {"warrior": {"speed": 360, "hp": 800, "protection": 0.5},
            "mage": {"speed": 240, "hp": 600, "protection": 0.5},
            "ranger": {"speed": 300, "hp": 450, "protection": 0.5}}
 
@@ -85,13 +85,19 @@ spawn_const = 200
 
 levels_size = {
     1: (7 * sizes["stand_room"][0] + 6 * sizes["corridor"][0] + spawn_const,
+        7 * sizes["stand_room"][1] + 6 * sizes["corridor"][0] + spawn_const),
+    2: (7 * sizes["stand_room"][0] + 6 * sizes["corridor"][0] + spawn_const,
         7 * sizes["stand_room"][1] + 6 * sizes["corridor"][0] + spawn_const)}
 
-levels = {1: {"size": (7, 7), "iters": [[2], [2, 2], [3, 4]]}}
+levels = {1: {"size": (7, 7), "iters": [[2], [2, 2], [3, 4]]}, 2: {"size": (7, 7), "iters": [[2, 2], [2, 3], [2, 3, 4]]}}
 
 enemiy_spawn = {1: {"close_combat":
                         {"standart":
-                             {"base_enemy": (3, 4)}}}}
+                             {"base_enemy": {2: (2, 3), 3: (3, 4)}}}},
+                2: {"close_combat":
+                        {"standart":
+                             {"base_enemy": {2: (3, 4), 3: (2, 3), 4: (5, 7)}}}}
+                }
 
 doors = {(0, -1): "hu", (-1, 0): "vl", (1, 0): "vr", (0, 1): "hd"}
 
@@ -187,7 +193,7 @@ class Room(pygame.sprite.Sprite):
         if not self.was and self.typer == "stand" and self.rect.colliderect(*player.inf().rect):
             self.was = True
             for k, v in enemiy_spawn[self.lvl]["close_combat"]["standart"].items():
-                for _ in range(randint(*v)):
+                for _ in range(randint(*v[self.num])):
                     print("...")
                     Close_Combat_Enemy(k, "close_combat", self.cx, self.cy, "stand_room", self.num, self.lvl)
 
@@ -283,6 +289,10 @@ class Player(pygame.sprite.Sprite):
             self.cur_hp -= real_dmg
             self.timer += 30
 
+    def transition(self, x, y):
+        self.wall_collidable_sprite.rect.x = x - self.rect.w // 2
+        self.wall_collidable_sprite.rect.y = y - self.rect.h // 2
+
     def kill(self):
         self.wall_collidable_sprite.kill()
         super().kill()
@@ -294,9 +304,19 @@ class Portal(pygame.sprite.Sprite):
         self.image = sprite_images['portals'][port_type]
         k = self.image.get_rect()
         self.rect = pygame.Rect(x - k.w // 2, y - k.h // 2, k.w, k.h)
+        self.formrect = FormalRect(x - levels_size[1][0] // 2 - k.w // 2 + SX // 2 + spawn_const // 2,
+                                   y - levels_size[1][1] // 2 - k.h // 2 + SY // 2, k.w, k.h + spawn_const // 2)
 
     def check(self):
-        return player.inf().rect.colliderect(self.rect) and self.rect.collidepoint(pygame.mouse.get_pos())
+        return player.inf().rect.colliderect(self.rect) and self.formrect.rect.collidepoint(pygame.mouse.get_pos())
+
+    def apply(self, x, y):
+        self.formrect.rect.x -= x
+        self.formrect.rect.y -= y
+
+    def kill(self):
+        self.formrect.kill()
+        super().kill()
 
 
 class PlayerHealthBar():
@@ -362,7 +382,6 @@ class Close_Combat_Enemy(pygame.sprite.Sprite):
         k = self.image.get_rect()
         dx = randint(-(sizes[spawn][0] - k.w) // 2, (sizes[spawn][0] - k.w) // 2)
         dy = (((sizes[spawn][0] - k.w) // 2) ** 2 - dx ** 2) ** 0.5
-        print(f"dx:{dx}, dy:{dy}, cx:{cx}, cy:{cy}, rect:{player.inf().rect}")
         dy = choice([dy, -dy])
         self.formspr = FormalRect(cx + dx, cy + dy, k.w, k.h)
         self.rect = k.move(cx + dx - player.inf().rect.x + SX // 2 - 50, cy + dy - player.inf().rect.y + SY // 2 - 50)
@@ -639,6 +658,8 @@ if __name__ == "__main__":
                             and button_inf["y"][0] <= event.pos[1] <= button_inf["y"][0] + button_inf["h"]):
                         screen.fill("black")
                         cur_lvl = 1
+                        screen_x = -levels_size[1][0] // 2 + SX // 2
+                        screen_y = -levels_size[1][1] // 2 + SY // 2
                         generate_level(cur_lvl)
                         fon_set = "game"
 
@@ -653,6 +674,9 @@ if __name__ == "__main__":
                     for portal in portals:
                         if portal.check():
                             cur_lvl += 1
+                            screen_x = -levels_size[cur_lvl][0] // 2 + SX // 2
+                            screen_y = -levels_size[cur_lvl][1] // 2 + SY // 2
+                            player.transition(levels_size[cur_lvl][0] // 2, levels_size[cur_lvl][0] // 2)
                             for i in transition_killable:
                                 i.kill()
                             screen_add.fill("black")
@@ -686,6 +710,8 @@ if __name__ == "__main__":
             for i in enemies:
                 i.apply(((classes[cur_class]["speed"] / fps) * dx if res[0] else 0),
                         ((classes[cur_class]["speed"] / fps) * dy if res[1] else 0))
+            for portal in portals:
+                portal.apply((classes[cur_class]["speed"] / fps) * dx, (classes[cur_class]["speed"] / fps) * dy)
             enemies.draw(screen)
             damage.apply()
         pygame.display.flip()
