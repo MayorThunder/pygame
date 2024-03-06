@@ -14,6 +14,7 @@ enemies = pygame.sprite.Group()
 portals = pygame.sprite.Group()
 close_combat_enemies = pygame.sprite.Group()
 rooms = pygame.sprite.Group()
+heal_c = pygame.sprite.Group()
 transition_killable = pygame.sprite.Group()
 
 
@@ -38,17 +39,20 @@ floor_count = {"stand_room": sizes["stand_room"][0] // sizes["floor"][1],
                "corridor_width": sizes["corridor"][0] // sizes["floor"][1]}
 button_inf = {"w": 565, "h": 78, "x": 676, "y": [384, 535]}
 classes = {"warrior": {"speed": 360, "hp": 800, "protection": 0.5},
-           "mage": {"speed": 240, "hp": 600, "protection": 0.5},
-           "ranger": {"speed": 300, "hp": 450, "protection": 0.5}}
+           "mage": {"speed": 300, "hp": 600, "protection": 0.5},
+           "ranger": {"speed": 360, "hp": 450, "protection": 0.5}}
 
 fon_set = None
 
 attacks = {"blade_default": "stag_blade"}
 
 game_enemies = {"close_combat":
-                    {"base_enemy":
+                    {"ghast":
                          {"speed": 150, "ats": 1, "hp": 1000, "contact_dmg": 100, "ats_add": 0.05,
-                          "hp_add": 100, "contact_dmg_add": 10, "speed_add": 4, "coeff": 0.1}}}
+                          "hp_add": 100, "contact_dmg_add": 10, "speed_add": 4, "coeff": 0.1},
+                     "demon_ghast":
+                         {"speed": 90, "ats": 0.6, "hp": 4000, "contact_dmg": 300, "ats_add": 0.03,
+                          "hp_add": 400, "contact_dmg_add": 35, "speed_add": 2, "coeff": 0.08}}}
 
 game_weapons = {"ranks":
                     {"D":
@@ -87,17 +91,25 @@ levels_size = {
     1: (7 * sizes["stand_room"][0] + 6 * sizes["corridor"][0] + spawn_const,
         7 * sizes["stand_room"][1] + 6 * sizes["corridor"][0] + spawn_const),
     2: (7 * sizes["stand_room"][0] + 6 * sizes["corridor"][0] + spawn_const,
-        7 * sizes["stand_room"][1] + 6 * sizes["corridor"][0] + spawn_const)}
+        7 * sizes["stand_room"][1] + 6 * sizes["corridor"][0] + spawn_const),
+    3: (9 * sizes["stand_room"][0] + 8 * sizes["corridor"][0] + spawn_const,
+        9 * sizes["stand_room"][1] + 8 * sizes["corridor"][0] + spawn_const)
+}
 
-levels = {1: {"size": (7, 7), "iters": [[2], [2, 2], [3, 4]]}, 2: {"size": (7, 7), "iters": [[2, 2], [2, 3], [2, 3, 4]]}}
+levels = {1: {"size": (7, 7), "iters": [[2], [2, 2], [3, 4]]},
+          2: {"size": (7, 7), "iters": [[2, 2], [2, 3], [2, 3, 4]]},
+          3: {"size": (9, 9), "iters":[[2], [2, 2, 3], [2, 2, 3, 4], [2, 4]]}}
 
 enemiy_spawn = {1: {"close_combat":
                         {"standart":
-                             {"base_enemy": {2: (2, 3), 3: (3, 4)}}}},
+                             {"ghast": {2: (2, 3), 3: (3, 4)}}}},
                 2: {"close_combat":
                         {"standart":
-                             {"base_enemy": {2: (3, 4), 3: (2, 3), 4: (5, 7)}}}}
-                }
+                             {"ghast": {2: (3, 4), 3: (2, 3), 4: (5, 7), "demon_ghast": {2: (0, 0), 3: (1, 1), 4: (0, 0)}}}}},
+                3: {"close_combat":
+                        {"standart":
+                             {"ghast": {2: (3, 5), 3: (3, 3), 4: (5, 6), 5: (0, 0)}, "demon_ghast": {2: (0, 0), 3: (1, 2), 4: (0, 0), 5: (2, 3)}}}}
+                    }
 
 doors = {(0, -1): "hu", (-1, 0): "vl", (1, 0): "vr", (0, 1): "hd"}
 
@@ -182,6 +194,9 @@ class Room(pygame.sprite.Sprite):
         if typer == "portal":
             Portal(cx, cy, "room_transition")
 
+        elif typer == "unusual":
+            Heals_consumable(0.4, sprite_images['heals_consumable'], self.cx, self.cy)
+
     def inf(self):
         return {"centre": (self.cx, self.cy), "type": self.typer}
 
@@ -194,7 +209,6 @@ class Room(pygame.sprite.Sprite):
             self.was = True
             for k, v in enemiy_spawn[self.lvl]["close_combat"]["standart"].items():
                 for _ in range(randint(*v[self.num])):
-                    print("...")
                     Close_Combat_Enemy(k, "close_combat", self.cx, self.cy, "stand_room", self.num, self.lvl)
 
 
@@ -232,6 +246,7 @@ class Player(pygame.sprite.Sprite):
         self.cl = pl_class
         self.v = classes[self.cl]["speed"]
         self.cur_hp = classes[self.cl]["hp"]
+        self.max_hp = self.cur_hp
         self.rect = k.move(SX // 2 - k.w // 2, SY // 2 - k.h // 2)
         self.turn = False
         self.protection = classes[self.cl]["protection"] * fps
@@ -240,11 +255,18 @@ class Player(pygame.sprite.Sprite):
                                                  k.w, k.h)
 
     def move(self, x, y):
-        ret = self.on_col(x, y)
         if self.cur_hp < 0:
             anihillation()
         if self.timer:
             self.timer -= 1
+        ret = pygame.sprite.spritecollideany(self.wall_collidable_sprite, heal_c)
+        if ret:
+            hp = ret.used()
+            if hp < 1:
+                self.cur_hp = (self.cur_hp + self.max_hp * hp if self.cur_hp + self.max_hp * hp < self.max_hp else self.max_hp)
+            else:
+                self.cur_hp = (self.cur_hp + hp if self.cur_hp + hp < self.max_hp else self.max_hp)
+        ret = self.on_col(x, y)
         if ret[0]:
             self.wall_collidable_sprite.rect.x += (classes[cur_class]["speed"] / fps) * x
         if ret[1]:
@@ -290,8 +312,8 @@ class Player(pygame.sprite.Sprite):
             self.timer += 30
 
     def transition(self, x, y):
-        self.wall_collidable_sprite.rect.x = x - self.rect.w // 2
-        self.wall_collidable_sprite.rect.y = y - self.rect.h // 2
+        self.wall_collidable_sprite.rect.x = levels_size[cur_lvl][0] // 2 - self.rect.w // 2
+        self.wall_collidable_sprite.rect.y = levels_size[cur_lvl][1] // 2 - self.rect.h // 2
 
     def kill(self):
         self.wall_collidable_sprite.kill()
@@ -304,19 +326,25 @@ class Portal(pygame.sprite.Sprite):
         self.image = sprite_images['portals'][port_type]
         k = self.image.get_rect()
         self.rect = pygame.Rect(x - k.w // 2, y - k.h // 2, k.w, k.h)
-        self.formrect = FormalRect(x - levels_size[1][0] // 2 - k.w // 2 + SX // 2 + spawn_const // 2,
-                                   y - levels_size[1][1] // 2 - k.h // 2 + SY // 2, k.w, k.h + spawn_const // 2)
 
     def check(self):
-        return player.inf().rect.colliderect(self.rect) and self.formrect.rect.collidepoint(pygame.mouse.get_pos())
+        return player.inf().rect.colliderect(self.rect)
 
-    def apply(self, x, y):
-        self.formrect.rect.x -= x
-        self.formrect.rect.y -= y
 
-    def kill(self):
-        self.formrect.kill()
-        super().kill()
+class Heals_consumable(pygame.sprite.Sprite):
+    def __init__(self, hp, im_path, x, y):
+        super().__init__(alls, transition_killable, heal_c)
+        self.heal = hp
+        self.im_path = im_path
+        self.image = self.im_path["healing_heart"]
+        k = self.image.get_rect()
+        self.rect = pygame.Rect(x - k.w // 2, y - k.h // 2, k.w, k.h)
+
+    def used(self):
+        self.image = self.im_path["healing_heart_used"]
+        heal_c.draw(screen_add)
+        self.kill()
+        return self.heal
 
 
 class PlayerHealthBar():
@@ -376,7 +404,7 @@ class Close_Combat_Enemy(pygame.sprite.Sprite):
                     * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.ats = ((game_enemies[entype][self.cl]["ats"] + game_enemies[entype][self.cl]["ats_add"] * (roomn - 2))
                     * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
-        self.image = pygame.transform.scale_by(sprite_images['enemies'][entype][enemy_class][0],
+        self.image = pygame.transform.scale_by(sprite_images['enemies'][entype][enemy_class],
                                                (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.mask = pygame.mask.from_surface(self.image)
         k = self.image.get_rect()
@@ -416,7 +444,7 @@ class Close_Combat_Enemy(pygame.sprite.Sprite):
         if not self.dmg_timer:
             real_dmg = randint(int(0.9 * amount), int(1.1 * amount))
             damage.add_to_showlist(damage_col["weapons"][weap_connected_to_class],
-                                   self.rect.x, self.rect.y - 1.5 * self.rect.h, real_dmg)
+                                   self.rect.x, self.rect.y - self.rect.h, real_dmg)
             self.cur_hp -= real_dmg
             self.dmg_timer += time
 
@@ -480,6 +508,7 @@ def generate_level(n):
     for i in walls:
         walls[i].draw(screen_add)
     portals.draw(screen_add)
+    heal_c.draw(screen_add)
 
 
 class Warrior_weapon(pygame.sprite.Sprite):
@@ -588,6 +617,8 @@ if __name__ == "__main__":
                                "vl": get_image('Wall_brick_vertical.png', False),
                                "vr": pygame.transform.rotate(get_image('Wall_brick_vertical.png', False), 180)},
                      'portals': {"room_transition": get_image("Portal.png", True)},
+                     'heals_consumable': {"healing_heart": get_image("Healing_heart.png", True),
+                                          "healing_heart_used": get_image("Healing_heart_used.png", True)},
                      'bars': {"player":
                                   {"left": get_image("Health_bar_left.png", True),
                                    "medium": get_image("Health_bar_medium.png", True),
@@ -600,9 +631,8 @@ if __name__ == "__main__":
                                 "ranger": [get_image('Ranger_armor.png', True),
                                            pygame.transform.flip(get_image('Ranger_armor.png', True), 1, 0)]},
                      'enemies': {"close_combat":
-                                     {"base_enemy": [get_image('Base_enemy.png', True),
-                                                     pygame.transform.flip(get_image('Warrior_armor.png', True), 1,
-                                                                           0)]}},
+                                     {"ghast": get_image('Ghast.png', True),
+                                      "demon_ghast": get_image('Demon_ghast.png', True)}},
                      'war_weapons': {"default":
                                          {"stag_blade": [get_image("Stagnum_blade.png", True),
                                                          pygame.transform.flip(get_image("Stagnum_blade.png", True), 1,
@@ -640,6 +670,19 @@ if __name__ == "__main__":
                         dy += 1
                     elif event.key == pygame.K_w:
                         dy -= 1
+                    elif fon_set == "game" and event.key == pygame.K_t:
+                        for portal in portals:
+                            if portal.check():
+                                cur_lvl += 1
+                                screen_x = -levels_size[cur_lvl][0] // 2 + SX // 2
+                                screen_y = -levels_size[cur_lvl][1] // 2 + SY // 2
+                                screen_add = pygame.Surface((levels_size[cur_lvl][0], levels_size[cur_lvl][1]))
+                                player.transition(levels_size[cur_lvl][0] // 2, levels_size[cur_lvl][0] // 2)
+                                for i in transition_killable:
+                                    i.kill()
+                                screen_add.fill("black")
+                                generate_level(cur_lvl)
+                                break
 
             elif event.type == pygame.KEYUP:
                 if fon_set == "game":
@@ -671,20 +714,7 @@ if __name__ == "__main__":
                             weapon = Warrior_weapon(cur_rank, cur_weap, weapon_class)
                         player_health_bar = PlayerHealthBar(200, 150, classes[cur_class]["hp"])
                 elif fon_set == "game" and event.button == pygame.BUTTON_LEFT:
-                    for portal in portals:
-                        if portal.check():
-                            cur_lvl += 1
-                            screen_x = -levels_size[cur_lvl][0] // 2 + SX // 2
-                            screen_y = -levels_size[cur_lvl][1] // 2 + SY // 2
-                            player.transition(levels_size[cur_lvl][0] // 2, levels_size[cur_lvl][0] // 2)
-                            for i in transition_killable:
-                                i.kill()
-                            screen_add.fill("black")
-                            generate_level(cur_lvl)
-                            break
-                    else:
-                        weapon.attack()
-
+                    weapon.attack()
         if fon_set == "death":
             for i in alls:
                 i.kill()
@@ -710,8 +740,6 @@ if __name__ == "__main__":
             for i in enemies:
                 i.apply(((classes[cur_class]["speed"] / fps) * dx if res[0] else 0),
                         ((classes[cur_class]["speed"] / fps) * dy if res[1] else 0))
-            for portal in portals:
-                portal.apply((classes[cur_class]["speed"] / fps) * dx, (classes[cur_class]["speed"] / fps) * dy)
             enemies.draw(screen)
             damage.apply()
         pygame.display.flip()
