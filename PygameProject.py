@@ -51,8 +51,12 @@ game_enemies = {"close_combat":
                          {"speed": 150, "ats": 1, "hp": 1000, "contact_dmg": 100, "ats_add": 0.05,
                           "hp_add": 100, "contact_dmg_add": 10, "speed_add": 4, "coeff": 0.1},
                      "demon_ghast":
-                         {"speed": 90, "ats": 0.6, "hp": 4000, "contact_dmg": 300, "ats_add": 0.03,
-                          "hp_add": 400, "contact_dmg_add": 35, "speed_add": 2, "coeff": 0.08}}}
+                         {"speed": 60, "ats": 0.6, "hp": 4000, "contact_dmg": 300, "ats_add": 0.05,
+                          "hp_add": 400, "contact_dmg_add": 45, "speed_add": 1, "coeff": 0.05},
+                     "spider":
+                         {"speed": 180, "ats": 2, "hp": 150, "contact_dmg": 30, "ats_add": 0.05,
+                          "hp_add": 7, "contact_dmg_add": 2, "speed_add": 4, "coeff": 0.05}
+                     }}
 
 game_weapons = {"ranks":
                     {"D":
@@ -79,11 +83,12 @@ game_weapons = {"ranks":
                      "SS": {"warrior":
                                 {"swords":
                                      {"stag_blade":
-                                          {"size": 1.8, "dmg": 450, "ats": 3.1, "AoE": 135}}}}}}
+                                          {"size": 1.8, "dmg": 10000, "ats": 3.1, "AoE": 135}}}}}}
 
 damage_col = {"weapons":
                   {"warrior": "orange"},
-              "close_combat": "red"}
+              "close_combat": "red",
+              "room": "black"}
 
 spawn_const = 200
 
@@ -93,23 +98,44 @@ levels_size = {
     2: (7 * sizes["stand_room"][0] + 6 * sizes["corridor"][0] + spawn_const,
         7 * sizes["stand_room"][1] + 6 * sizes["corridor"][0] + spawn_const),
     3: (9 * sizes["stand_room"][0] + 8 * sizes["corridor"][0] + spawn_const,
-        9 * sizes["stand_room"][1] + 8 * sizes["corridor"][0] + spawn_const)
+        9 * sizes["stand_room"][1] + 8 * sizes["corridor"][0] + spawn_const),
+    4: (9 * sizes["stand_room"][0] + 8 * sizes["corridor"][0] + spawn_const,
+        9 * sizes["stand_room"][1] + 8 * sizes["corridor"][0] + spawn_const),
+    5: (11 * sizes["stand_room"][0] + 10 * sizes["corridor"][0] + spawn_const,
+        11 * sizes["stand_room"][1] + 10 * sizes["corridor"][0] + spawn_const)
 }
 
 levels = {1: {"size": (7, 7), "iters": [[2], [2, 2], [3, 4]]},
           2: {"size": (7, 7), "iters": [[2, 2], [2, 3], [2, 3, 4]]},
-          3: {"size": (9, 9), "iters":[[2], [2, 2, 3], [2, 2, 3, 4], [2, 4]]}}
+          3: {"size": (9, 9), "iters": [[2], [2, 2, 3], [2, 2, 4, 2], [2, 3]]},
+          4: {"size": (9, 9), "iters": [[2, 2], [2, 2, 3], [2, 2, 3, 2], [2, 2, 2, 3, 4]]},
+          5: {"size": (11, 11), "iters": [[2, 2, 3], [2, 2, 2, 2, 3, 3], [2, 2, 2, 2, 3], [2, 2, 3, 4], [2, 2, 3]]}}
 
 enemiy_spawn = {1: {"close_combat":
                         {"standart":
-                             {"ghast": {2: (2, 3), 3: (3, 4)}}}},
+                             {"ghast": {2: (2, 3), 3: (3, 4)},
+                              "spider": {2: (5, 7), 3: (6, 7)}}}},
                 2: {"close_combat":
                         {"standart":
-                             {"ghast": {2: (3, 4), 3: (2, 3), 4: (5, 7), "demon_ghast": {2: (0, 0), 3: (1, 1), 4: (0, 0)}}}}},
+                             {"ghast": {2: (3, 4), 3: (2, 3), 4: (4, 5)},
+                              "demon_ghast": {2: (0, 0), 3: (1, 1), 4: (0, 0)},
+                              "spider": {2: (5, 7), 3: (8, 10), 4: (15, 20)}}}},
                 3: {"close_combat":
                         {"standart":
-                             {"ghast": {2: (3, 5), 3: (3, 3), 4: (5, 6), 5: (0, 0)}, "demon_ghast": {2: (0, 0), 3: (1, 2), 4: (0, 0), 5: (2, 3)}}}}
-                    }
+                             {"ghast": {2: (3, 5), 3: (3, 3), 4: (5, 6), 5: (0, 0)},
+                              "demon_ghast": {2: (0, 0), 3: (1, 2), 4: (0, 0), 5: (2, 3)},
+                              "spider": {2: (6, 10), 3: (7, 10), 4: (20, 25), 5: (5, 6)}}}},
+                4: {"close_combat":
+                        {"standart":
+                             {"ghast": {2: (4, 5), 3: (3, 4), 4: (6, 7), 5: (2, 3)},
+                              "demon_ghast": {2: (0, 1), 3: (2, 2), 4: (0, 1), 5: (3, 4)},
+                              "spider": {2: (7, 12), 3: (8, 15), 4: (30, 32), 5: (7, 10)}}}},
+                5: {"close_combat":
+                        {"standart":
+                             {"ghast": {2: (5, 6), 3: (3, 5), 4: (5, 6), 5: (4, 5), 6: (10, 11)},
+                              "demon_ghast": {2: (1, 2), 3: (2, 3), 4: (1, 2), 5: (4, 4), 6: (1, 2)},
+                              "spider": {2: (10, 14), 3: (11, 17), 4: (35, 38), 5: (10, 12), 6: (7, 10)}}}}
+                }
 
 doors = {(0, -1): "hu", (-1, 0): "vl", (1, 0): "vr", (0, 1): "hd"}
 
@@ -207,6 +233,7 @@ class Room(pygame.sprite.Sprite):
     def check(self):
         if not self.was and self.typer == "stand" and self.rect.colliderect(*player.inf().rect):
             self.was = True
+            player.get_damage(0, "room", fps * 2.5)
             for k, v in enemiy_spawn[self.lvl]["close_combat"]["standart"].items():
                 for _ in range(randint(*v[self.num])):
                     Close_Combat_Enemy(k, "close_combat", self.cx, self.cy, "stand_room", self.num, self.lvl)
@@ -232,9 +259,12 @@ class FormalRect(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, w, h)
 
 
-def anihillation():
+def anihillation(reason):
     global fon_set
-    fon_set = "death"
+    if reason == "death":
+        fon_set = "death"
+    elif reason == "win":
+        fon_set = "win"
 
 
 class Player(pygame.sprite.Sprite):
@@ -256,14 +286,15 @@ class Player(pygame.sprite.Sprite):
 
     def move(self, x, y):
         if self.cur_hp < 0:
-            anihillation()
+            anihillation("death")
         if self.timer:
             self.timer -= 1
         ret = pygame.sprite.spritecollideany(self.wall_collidable_sprite, heal_c)
         if ret:
             hp = ret.used()
             if hp < 1:
-                self.cur_hp = (self.cur_hp + self.max_hp * hp if self.cur_hp + self.max_hp * hp < self.max_hp else self.max_hp)
+                self.cur_hp = (
+                    self.cur_hp + self.max_hp * hp if self.cur_hp + self.max_hp * hp < self.max_hp else self.max_hp)
             else:
                 self.cur_hp = (self.cur_hp + hp if self.cur_hp + hp < self.max_hp else self.max_hp)
         ret = self.on_col(x, y)
@@ -303,15 +334,15 @@ class Player(pygame.sprite.Sprite):
     def inf(self):
         return self.wall_collidable_sprite
 
-    def get_damage(self, amount, entype):
+    def get_damage(self, amount, entype, protection_time):
         if not self.timer:
             real_dmg = randint(int(0.9 * amount), int(1.1 * amount))
             damage.add_to_showlist(damage_col[entype],
                                    self.rect.x, self.rect.y - 1.5 * self.rect.h, real_dmg)
             self.cur_hp -= real_dmg
-            self.timer += 30
+            self.timer += protection_time
 
-    def transition(self, x, y):
+    def transition(self):
         self.wall_collidable_sprite.rect.x = levels_size[cur_lvl][0] // 2 - self.rect.w // 2
         self.wall_collidable_sprite.rect.y = levels_size[cur_lvl][1] // 2 - self.rect.h // 2
 
@@ -374,16 +405,19 @@ class PlayerHealthBar():
                               self.y + 3, *self.health_bar_size))
             if hp > (i + 1) * 50:
                 pygame.draw.rect(screen, (146, 0, 10), (self.x + i * self.medium_bar_rect.w + self.left_bar_rect.w + 1,
-                              self.y + 3, self.health_bar_size[0] * (1 if hp > (i + 2) * 50 else (hp - (i + 1) * 50) / 50),
-                              self.health_bar_size[1]))
-        screen.blit(self.right_bar, (self.x + (self.max_hp // 50 - 2) * self.medium_bar_rect.w + self.left_bar_rect.w, self.y))
+                                                        self.y + 3, self.health_bar_size[0] * (
+                                                            1 if hp > (i + 2) * 50 else (hp - (i + 1) * 50) / 50),
+                                                        self.health_bar_size[1]))
+        screen.blit(self.right_bar,
+                    (self.x + (self.max_hp // 50 - 2) * self.medium_bar_rect.w + self.left_bar_rect.w, self.y))
         pygame.draw.rect(screen, "black",
                          (self.x + (self.max_hp // 50 - 2) * self.medium_bar_rect.w + self.left_bar_rect.w + 1,
                           self.y + 3, *self.health_bar_size))
         if hp > self.max_hp - 50:
             pygame.draw.rect(screen, (146, 0, 10),
                              (self.x + (self.max_hp // 50 - 2) * self.medium_bar_rect.w + self.left_bar_rect.w + 1,
-                              self.y + 3, self.health_bar_size[0] * (1 if hp == self.max_hp else (self.max_hp - hp) / 50),
+                              self.y + 3,
+                              self.health_bar_size[0] * (1 if hp == self.max_hp else (self.max_hp - hp) / 50),
                               self.health_bar_size[1]))
 
     def change(self, hp):
@@ -400,7 +434,7 @@ class Close_Combat_Enemy(pygame.sprite.Sprite):
         self.v = ((game_enemies[entype][self.cl]["speed"] + game_enemies[entype][self.cl]["speed_add"] * (roomn - 2))
                   * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.dmg = ((game_enemies[entype][self.cl]["contact_dmg"] + game_enemies[entype][self.cl]["contact_dmg_add"] * (
-                    roomn - 2))
+                roomn - 2))
                     * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
         self.ats = ((game_enemies[entype][self.cl]["ats"] + game_enemies[entype][self.cl]["ats_add"] * (roomn - 2))
                     * (1 + game_enemies[entype][self.cl]["coeff"] * (lvl - 1)))
@@ -423,7 +457,7 @@ class Close_Combat_Enemy(pygame.sprite.Sprite):
         ret = pygame.sprite.spritecollideany(self, player_gr)
         if ret and not self.attack_timer:
             self.attack_timer = fps // self.ats + 1
-            ret.get_damage(self.dmg, self.entype)
+            ret.get_damage(self.dmg, self.entype, 0)
         elif self.attack_timer:
             self.attack_timer -= 1
         self.rect.x -= x
@@ -491,8 +525,10 @@ def generate_level(n):
                         if data[a + x][b + y] and abs(data[a + x][b + y] - data[a][b]) == 1:
                             emptiness.append(doors[(y, x)])
                             Room((y, x),
-                                 (b + 0.5 + y * 0.5) * sizes["stand_room"][0] + (b + 0.5 * y) * sizes["corridor"][0] + spawn_const // 2,
-                                 (a + 0.5 + x * 0.5) * sizes["stand_room"][1] + (a + 0.5 * x) * sizes["corridor"][0] + spawn_const // 2, n)
+                                 (b + 0.5 + y * 0.5) * sizes["stand_room"][0] + (b + 0.5 * y) * sizes["corridor"][
+                                     0] + spawn_const // 2,
+                                 (a + 0.5 + x * 0.5) * sizes["stand_room"][1] + (a + 0.5 * x) * sizes["corridor"][
+                                     0] + spawn_const // 2, n)
                 name = None
                 if types[a][b] == 1:
                     name = "start"
@@ -503,7 +539,8 @@ def generate_level(n):
                 elif types[a][b] == 4:
                     name = "portal"
                 Room(name, (b + 0.5) * sizes["stand_room"][0] + b * sizes["corridor"][0] + spawn_const // 2,
-                     (a + 0.5) * sizes["stand_room"][1] + a * sizes["corridor"][0] + spawn_const // 2, n, num=data[a][b], empty=emptiness)
+                     (a + 0.5) * sizes["stand_room"][1] + a * sizes["corridor"][0] + spawn_const // 2, n,
+                     num=data[a][b], empty=emptiness)
                 emptiness.clear()
     for i in walls:
         walls[i].draw(screen_add)
@@ -549,9 +586,10 @@ class Warrior_weapon(pygame.sprite.Sprite):
                 self.AoE / (fps / self.ats) * self.timer * (1 if self.side else -1))
             self.rect.x = x - formx - 25
             self.rect.y = y - formy - 15
-            ret = pygame.sprite.spritecollideany(self, enemies)
+            ret = pygame.sprite.spritecollide(self, enemies, False)
             if ret:
-                ret.get_damage(self.dmg, (fps // self.ats - self.timer) + 2, self.connect_to_class)
+                for i in ret:
+                    i.get_damage(self.dmg, (fps // self.ats - self.timer) + 2, self.connect_to_class)
         else:
             self.timer = 0
             self.is_attacking = False
@@ -589,9 +627,9 @@ class Damage():
                 screen.blit(x[i][0], x[i][1])
                 x[i][2] -= 1
             else:
-                deleting.append(i)
+                deleting.append(x[i])
         for i in deleting:
-            self.damage_show_list.pop(i)
+            self.damage_show_list.remove(i)
 
 
 def terminate():
@@ -632,7 +670,8 @@ if __name__ == "__main__":
                                            pygame.transform.flip(get_image('Ranger_armor.png', True), 1, 0)]},
                      'enemies': {"close_combat":
                                      {"ghast": get_image('Ghast.png', True),
-                                      "demon_ghast": get_image('Demon_ghast.png', True)}},
+                                      "demon_ghast": get_image('Demon_ghast.png', True),
+                                      "spider": get_image("Spider.png", True)}},
                      'war_weapons': {"default":
                                          {"stag_blade": [get_image("Stagnum_blade.png", True),
                                                          pygame.transform.flip(get_image("Stagnum_blade.png", True), 1,
@@ -673,16 +712,19 @@ if __name__ == "__main__":
                     elif fon_set == "game" and event.key == pygame.K_t:
                         for portal in portals:
                             if portal.check():
-                                cur_lvl += 1
-                                screen_x = -levels_size[cur_lvl][0] // 2 + SX // 2
-                                screen_y = -levels_size[cur_lvl][1] // 2 + SY // 2
-                                screen_add = pygame.Surface((levels_size[cur_lvl][0], levels_size[cur_lvl][1]))
-                                player.transition(levels_size[cur_lvl][0] // 2, levels_size[cur_lvl][0] // 2)
-                                for i in transition_killable:
-                                    i.kill()
-                                screen_add.fill("black")
-                                generate_level(cur_lvl)
-                                break
+                                if cur_lvl < 5:
+                                    cur_lvl += 1
+                                    screen_x = -levels_size[cur_lvl][0] // 2 + SX // 2
+                                    screen_y = -levels_size[cur_lvl][1] // 2 + SY // 2
+                                    screen_add = pygame.Surface((levels_size[cur_lvl][0], levels_size[cur_lvl][1]))
+                                    player.transition()
+                                    for i in transition_killable:
+                                        i.kill()
+                                    screen_add.fill("black")
+                                    generate_level(cur_lvl)
+                                    break
+                                else:
+                                    anihillation("win")
 
             elif event.type == pygame.KEYUP:
                 if fon_set == "game":
@@ -722,6 +764,14 @@ if __name__ == "__main__":
             screen_add.fill("black")
             font = pygame.font.Font(None, 200)
             text = font.render("You died", True, (255, 100, 100))
+            screen.blit(text, (SX // 2 - 300, SY // 2 - 100))
+        elif fon_set == "win":
+            for i in alls:
+                i.kill()
+            screen.fill("black")
+            screen_add.fill("black")
+            font = pygame.font.Font(None, 200)
+            text = font.render("You won", True, (100, 255, 100))
             screen.blit(text, (SX // 2 - 300, SY // 2 - 100))
         elif fon_set == "start" and count % 6:
             screen.blit(data_fon["start"][(count // 6) % 3], (0, 0))
