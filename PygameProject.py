@@ -38,7 +38,7 @@ floor_count = {"stand_room": sizes["stand_room"][0] // sizes["floor"][1],
                "corridor_height": sizes["corridor"][1] // sizes["floor"][1],
                "corridor_width": sizes["corridor"][0] // sizes["floor"][1]}
 button_inf = {"w": 565, "h": 78, "x": 676, "y": [384, 535]}
-classes = {"warrior": {"speed": 360, "hp": 800, "protection": 0.5},
+classes = {"warrior": {"speed": 240, "hp": 800, "protection": 0.5},
            "mage": {"speed": 300, "hp": 600, "protection": 0.5},
            "ranger": {"speed": 360, "hp": 450, "protection": 0.5}}
 
@@ -83,7 +83,7 @@ game_weapons = {"ranks":
                      "SS": {"warrior":
                                 {"swords":
                                      {"stag_blade":
-                                          {"size": 1.8, "dmg": 10000, "ats": 3.1, "AoE": 135}}}}}}
+                                          {"size": 1.8, "dmg": 450, "ats": 3.1, "AoE": 135}}}}}}
 
 damage_col = {"weapons":
                   {"warrior": "orange"},
@@ -233,7 +233,7 @@ class Room(pygame.sprite.Sprite):
     def check(self):
         if not self.was and self.typer == "stand" and self.rect.colliderect(*player.inf().rect):
             self.was = True
-            player.get_damage(0, "room", fps * 2.5)
+            player.get_damage(0, "room", fps * 2)
             for k, v in enemiy_spawn[self.lvl]["close_combat"]["standart"].items():
                 for _ in range(randint(*v[self.num])):
                     Close_Combat_Enemy(k, "close_combat", self.cx, self.cy, "stand_room", self.num, self.lvl)
