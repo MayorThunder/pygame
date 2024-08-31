@@ -2,7 +2,7 @@ import os, pygame
 import sys
 from math import sin, cos, radians
 from random import randint, choice
-from Weapon_work_list import Stagnum_blade, Handgun, Volcano, Moon_blessing, Planetar_bomber
+from Weapon_work_list import Stagnum_blade, Handgun, Volcano, Moon_blessing, Planetar_bomber, Rail_minigun
 
 SX, SY = 1920, 1080
 alls = pygame.sprite.Group()
@@ -74,7 +74,6 @@ game_weapons = {"warrior":
                                     "S": {"size": 1.6, "dmg": 400, "ats": 2.7, "AoE": 135},
                                     "SR": {"size": 1.8, "dmg": 450, "ats": 3.1, "AoE": 135}}}}},
                 "ranger":
-                    {"guns":
                          {"handgun":
                               {"base":
                                    {"D": {"dmg": 150, "ats": 4, "proj_speed": 480},
@@ -86,51 +85,57 @@ game_weapons = {"warrior":
                                     "lifetime": 2.3}},
                           "volcano":
                               {"base":
-                                   {"D": {"dmg": 300, "ats": 22, "proj_speed": 560},
-                                    "C": {"dmg": 310, "ats": 24, "proj_speed": 573},
-                                    "B": {"dmg": 330, "ats": 27, "proj_speed": 600},
-                                    "A": {"dmg": 350, "ats": 30, "proj_speed": 630},
-                                    "S": {"dmg": 370, "ats": 34, "proj_speed": 660},
-                                    "SR": {"dmg": 400, "ats": 40, "proj_speed": 700},
-                                    "lifetime": 1.8}}},
-                     "bows":
-                         {"moon_blessing":
+                                   {"D": {"dmg": 240, "ats": 19.8, "proj_speed": 560},
+                                    "C": {"dmg": 248, "ats": 21.6, "proj_speed": 573},
+                                    "B": {"dmg": 264, "ats": 24.3, "proj_speed": 600},
+                                    "A": {"dmg": 280, "ats": 27, "proj_speed": 630},
+                                    "S": {"dmg": 296, "ats": 30.6, "proj_speed": 660},
+                                    "SR": {"dmg": 320, "ats": 36, "proj_speed": 700},
+                                    "lifetime": 1.8}},
+                         "moon_blessing":
                               {"base":
-                                   {"D": {"dmg": 2800, "ats": 0.7, "proj_speed": 960,
+                                   {"D": {"dmg": 3500, "ats": 1.05, "proj_speed": 960,
                                           "armor_pen": 5},
-                                    "C": {"dmg": 2900, "ats": 0.75, "proj_speed": 980,
+                                    "C": {"dmg": 3600, "ats": 1.125, "proj_speed": 980,
                                           "armor_pen": 5},
-                                    "B": {"dmg": 3100, "ats": 0.82, "proj_speed": 1010,
+                                    "B": {"dmg": 3800, "ats": 1.23, "proj_speed": 1010,
                                           "armor_pen": 5},
-                                    "A": {"dmg": 3300, "ats": 0.92, "proj_speed": 1060,
+                                    "A": {"dmg": 4050, "ats": 1.38, "proj_speed": 1060,
                                           "armor_pen": 6},
-                                    "S": {"dmg": 3600, "ats": 1.05, "proj_speed": 1120,
+                                    "S": {"dmg": 4400, "ats": 1.575, "proj_speed": 1120,
                                           "armor_pen": 6},
-                                    "SR": {"dmg": 4000, "ats": 1.2, "proj_speed": 1200,
+                                    "SR": {"dmg": 5000, "ats": 1.8, "proj_speed": 1200,
                                           "armor_pen": 7},
-                                    "lifetime": 2.5},
+                                    "lifetime": 2.5,
+                                    "speed_growth": 1.5,
+                                    "dmg_growth": 1.2,
+                                    "penetration_growth": 1.2,
+                                    "size_growth": 3},
                                "alt":
-                                   {"D": {"dmg": 1000, "ats": 2, "proj_speed": 480,
+                                   {"D": {"dmg": 1000, "ats": 2.4, "proj_speed": 480,
                                           "armor_pen": 2},
-                                    "C": {"dmg": 1070, "ats": 2.1, "proj_speed": 490,
+                                    "C": {"dmg": 1070, "ats": 2.5, "proj_speed": 490,
                                           "armor_pen": 2},
-                                    "B": {"dmg": 1150, "ats": 2.3, "proj_speed": 505,
+                                    "B": {"dmg": 1150, "ats": 2.7, "proj_speed": 505,
                                           "armor_pen": 2},
-                                    "A": {"dmg": 1250, "ats": 2.5, "proj_speed": 530,
+                                    "A": {"dmg": 1250, "ats": 3, "proj_speed": 530,
                                           "armor_pen": 2},
-                                    "S": {"dmg": 1400, "ats": 2.8, "proj_speed": 560,
+                                    "S": {"dmg": 1400, "ats": 3.4, "proj_speed": 560,
                                           "armor_pen": 3},
-                                    "SR": {"dmg": 1650, "ats": 3.2, "proj_speed": 600,
+                                    "SR": {"dmg": 1650, "ats": 4, "proj_speed": 600,
                                           "armor_pen": 3},
-                                    "change_time": 1.5,
-                                    "lifetime": 3}}},
-                     "rocket_launchers":
-                         {"planetar_bomber":
+                                    "lifetime": 3,
+                                    "size_growth": 1.8,
+                                    "speed_growth": 1.5,
+                                    "dmg_growth": 1.3,
+                                    "penetration_growth": 1.5},
+                               "change_time": 1.5},
+                         "planetar_bomber":
                               {"base":
                                    {"D": {"dmg": 750, "ats": 3, "proj_speed": 640, "splash_size": 1.5},
                                     "C": {"dmg": 780, "ats": 3.1, "proj_speed": 653, "splash_size": 1.65},
-                                    "B": {"dmg": 850, "ats": 3.3, "proj_speed": 670, "splash_size": 1.42},
-                                    "A": {"dmg": 980, "ats": 3.6, "proj_speed": 706, "splash_size": 1.75},
+                                    "B": {"dmg": 850, "ats": 3.3, "proj_speed": 670, "splash_size": 1.92},
+                                    "A": {"dmg": 980, "ats": 3.6, "proj_speed": 706, "splash_size": 2.25},
                                     "S": {"dmg": 1030, "ats": 4, "proj_speed": 746, "splash_size": 2.7},
                                     "SR": {"dmg": 1200, "ats": 4.5, "proj_speed": 800, "splash_size": 3.3},
                                     "lifetime": 2,
@@ -142,10 +147,31 @@ game_weapons = {"warrior":
                                     "A": {"dmg": 3890, "ats": 0.6, "proj_speed": 1325, "splash_size": 1.5},
                                     "S": {"dmg": 4120, "ats": 0.67, "proj_speed": 1400, "splash_size": 1.8},
                                     "SR": {"dmg": 4500, "ats": 0.75, "proj_speed": 1500, "splash_size": 2.2},
-                                    "change_time": 1,
                                     "lifetime": 2.5,
-                                    "splash_coeff": 0.4}}}},
-
+                                    "splash_coeff": 0.4},
+                               "change_time": 1},
+                          "rail_minigun":
+                              {"base":
+                                   {"D": {"dmg": 400, "ats": 12, "proj_speed": 1000, "splash_size": 1.5},
+                                    "C": {"dmg": 430, "ats": 12.5, "proj_speed": 1030, "splash_size": 1.65},
+                                    "B": {"dmg": 470, "ats": 13.5, "proj_speed": 1170, "splash_size": 1.92},
+                                    "A": {"dmg": 520, "ats": 15, "proj_speed": 1150, "splash_size": 2.25},
+                                    "S": {"dmg": 590, "ats": 17, "proj_speed": 1250, "splash_size": 2.7},
+                                    "SR": {"dmg": 700, "ats": 20, "proj_speed": 1400, "splash_size": 3.3},
+                                    "lifetime": 2,
+                                    "splash_coeff": 1},
+                               "alt":
+                                   {"D": {"dmg": 7000, "ats": 0.6, "proj_speed": 1800, "armor_pen": 1000},
+                                    "C": {"dmg": 7300, "ats": 0.615, "proj_speed": 1830, "armor_pen": 1000},
+                                    "B": {"dmg": 7900, "ats": 0.645, "proj_speed": 1890, "armor_pen": 1000},
+                                    "A": {"dmg": 8700, "ats": 0.69, "proj_speed": 2000, "armor_pen": 1000},
+                                    "S": {"dmg": 10000, "ats": 0.75, "proj_speed": 2200, "armor_pen": 1000},
+                                    "SR": {"dmg": 12000, "ats": 0.825, "proj_speed": 2500, "armor_pen": 1000},
+                                    "lifetime": 2,
+                                    "size_growth": 4,
+                                    "damage_growth": 0.75},
+                               "change_time": 3}
+                          },
                 "mage":
                     {"protector_timeblade":
                          {"base":
@@ -216,7 +242,8 @@ doors = {(0, -1): "hu", (-1, 0): "vl", (1, 0): "vr", (0, 1): "hd"}
 cur_weap = None
 cur_rank = None
 weapon_to_class_matcher = {"stag_blade": Stagnum_blade, "handgun": Handgun, "volcano": Volcano,
-                           "moon_blessing": Moon_blessing, "planetar_bomber": Planetar_bomber}
+                           "moon_blessing": Moon_blessing, "planetar_bomber": Planetar_bomber,
+                           "rail_minigun": Rail_minigun}
 cur_class = "ranger"
 fps = 60
 
@@ -632,22 +659,22 @@ class Warrior_weapon(pygame.sprite.Sprite):
         self.weapon = weap
         self.weapon_class = weap_cl
         self.workl = weapon_to_class_matcher[self.weapon]()
-        self.image = sprite_images["war_weapons"][self.position][self.weapon][0]
-        self.size = game_weapons["warrior"][self.weapon_class][self.weapon]["base"][self.rank]["size"]
+        self.image = sprite_images["war_weapons"][self.weapon][self.position][0]
+        self.size = game_weapons["warrior"][self.weapon]["base"][self.rank]["size"]
         self.image = pygame.transform.scale_by(self.image, self.size)
         self.rect = self.image.get_rect().move(0, 0)
-        self.base_dmg = game_weapons["warrior"][self.weapon_class][self.weapon]["base"][self.rank]["dmg"]
-        self.base_ats = game_weapons["warrior"][self.weapon_class][self.weapon]["base"][self.rank]["ats"]
-        self.AoE = (game_weapons["warrior"][self.weapon_class][self.weapon]["base"][self.rank]["AoE"]
+        self.base_dmg = game_weapons["warrior"][self.weapon]["base"][self.rank]["dmg"]
+        self.base_ats = game_weapons["warrior"][self.weapon]["base"][self.rank]["ats"]
+        self.AoE = (game_weapons["warrior"][self.weapon]["base"][self.rank]["AoE"]
                     if self.weapon_class == "swords" else None)
-        self.timer = 0
+        self.reload_timer = 0
         self.x, self.y = 0, 0
 
     def apply(self, rect, side):
         self.x = rect.x
         self.y = rect.y
         dt = self.workl.apply(self.x, self.y, side, self.rect, self.position,
-                              self.weapon, self.AoE, self.base_ats, self.timer, enemies, fps, self.base_dmg, self.size,
+                              self.weapon, self.AoE, self.base_ats, self.reload_timer, enemies, fps, self.base_dmg, self.size,
                               self.is_attacking, sprite_images, self)
         if "side" in dt:
             self.side = dt["side"]
@@ -656,7 +683,7 @@ class Warrior_weapon(pygame.sprite.Sprite):
         if "pos" in dt:
             self.position = dt["pos"]
         if "timer" in dt:
-            self.timer = dt["timer"]
+            self.reload_timer = dt["timer"]
         if "is_att" in dt:
             self.is_attacking = dt["is_att"]
         if "image" in dt:
@@ -672,71 +699,23 @@ class Warrior_weapon(pygame.sprite.Sprite):
 
 
 class Ranger_weapon(pygame.sprite.Sprite):
-    def __init__(self, rank, weap, weap_cl):
+    def __init__(self, rank, weap):
         super().__init__(weapon_gr, alls)
-        self.proj_lst = []
         self.cur_atk_type = "base"
         self.position = "hold"
         self.is_attacking = False
         self.side = False
         self.rank = rank
         self.weapon = weap
-        self.weapon_class = weap_cl
 
-        self.image = sprite_images["ran_weapons"][self.position][self.weapon][0]
-        self.base_proj_image = sprite_images["ran_weapons"]["base_proj"][self.weapon]
-        self.base_splash_image = sprite_images["ran_weapons"]["base_splash"].get(self.weapon, None)
-        self.alt_proj_image = sprite_images["ran_weapons"]["alt_proj"].get(self.weapon, None)
-        self.alt_splash_image = sprite_images["ran_weapons"]["alt_splash"].get(self.weapon, None)
+        self.image = sprite_images["ran_weapons"][self.weapon][self.position][0]
+        self.data = game_weapons["ranger"][self.weapon]
+
+        self.images = sprite_images["ran_weapons"][self.weapon]
 
         self.rect = self.image.get_rect().move(0, 0)
-        self.workl = weapon_to_class_matcher[self.weapon]()
+        self.workl = weapon_to_class_matcher[self.weapon](self.data, self.images, self.rank)
 
-        self.base_dmg = game_weapons["ranger"][self.weapon_class][self.weapon]["base"][self.rank]["dmg"]
-        self.base_ats = game_weapons["ranger"][self.weapon_class][self.weapon]["base"][self.rank]["ats"]
-        self.base_proj_speed = game_weapons["ranger"][self.weapon_class][self.weapon]["base"][self.rank][
-            "proj_speed"]
-        self.base_armor_pen = game_weapons["ranger"][self.weapon_class][self.weapon]["base"][self.rank].get(
-            "armor_pen", 1)
-
-        self.base_life_time = game_weapons["ranger"][self.weapon_class][self.weapon]["base"]["lifetime"]
-        self.base_splash_coeff = (game_weapons["ranger"][self.weapon_class][self.weapon]["base"]["splash_coeff"]
-                             if "splash_coeff" in game_weapons["ranger"][self.weapon_class][self.weapon]["base"]
-                             else None)
-        self.base_splash_size = (game_weapons["ranger"][self.weapon_class][self.weapon]["base"]
-                                [self.rank]["splash_size"] if "splash_size" in
-                                game_weapons["ranger"][self.weapon_class][self.weapon]["base"][self.rank] else None)
-
-        if "alt" in game_weapons["ranger"][self.weapon_class][self.weapon]:
-            self.alt_dmg = game_weapons["ranger"][self.weapon_class][self.weapon]["alt"][self.rank]["dmg"]
-            self.alt_ats = game_weapons["ranger"][self.weapon_class][self.weapon]["alt"][self.rank]["ats"]
-            self.alt_proj_speed = game_weapons["ranger"][self.weapon_class][self.weapon]["alt"][self.rank][
-                "proj_speed"]
-
-            self.alt_armor_pen = game_weapons["ranger"][self.weapon_class][self.weapon]["alt"][self.rank].get(
-                "armor_pen", 1)
-            self.alt_life_time = game_weapons["ranger"][self.weapon_class][self.weapon]["alt"]["lifetime"]
-            self.ch_time = game_weapons["ranger"][self.weapon_class][self.weapon]["alt"]["change_time"]
-
-            self.alt_splash_coeff = (game_weapons["ranger"][self.weapon_class][self.weapon]["alt"]["splash_coeff"]
-                                      if "splash_coeff" in
-                                         game_weapons["ranger"][self.weapon_class][self.weapon]["alt"] else None)
-            self.alt_splash_size = (game_weapons["ranger"][self.weapon_class][self.weapon]["alt"]
-                                    [self.rank]["splash_size"] if "splash_size" in
-                                    game_weapons["ranger"][self.weapon_class][self.weapon]["alt"][self.rank]
-                                    else None)
-        else:
-            self.alt_dmg = None
-            self.alt_ats = None
-            self.alt_proj_speed = None
-            self.alt_armor_pen = None
-            self.alt_life_time = None
-            self.ch_time = None
-            self.alt_splash_coeff = None
-            self.alt_splash_size = None
-        self.change_timer = 0
-        self.changing_to = "alt"
-        self.timer = 0
         self.x, self.y, self.w, self.h = 0, 0, 0, 0
 
     def apply(self, rect, side):
@@ -744,38 +723,24 @@ class Ranger_weapon(pygame.sprite.Sprite):
         self.y = rect.y
         self.w = rect.w
         self.h = rect.h
-        dt = self.workl.apply(self.x, self.y, side, self.rect, pygame.mouse.get_pos(), self.position,
-                              self.weapon, self.base_ats, self.alt_ats, self.timer, fps,
-                              self.is_attacking, sprite_images, self.cur_atk_type, self.change_timer, self.ch_time,
-                              self.changing_to)
-        if "side" in dt:
-            self.side = dt["side"]
+        dt = self.workl.apply(self.x, self.y, side, self.rect, pygame.mouse.get_pos(), self.position, fps,
+                              self.is_attacking, self.cur_atk_type)
         if "pos" in dt:
             self.position = dt["pos"]
-        if "timer" in dt:
-            self.timer = dt["timer"]
         if "image" in dt:
             self.image = dt["image"]
         if "is_attacking" in dt:
             self.is_attacking = dt["is_attacking"]
-        if "ch_timer" in dt:
-            self.change_timer = dt["ch_timer"]
         if "cur_atk_type" in dt:
             self.cur_atk_type = dt["cur_atk_type"]
-        if "changing_to" in dt:
-            self.changing_to = dt["changing_to"]
-        if "base_proj" in dt:
-            self.proj_lst.append(Projectile(self.base_armor_pen, self.base_proj_speed, self.base_dmg, dt["base_proj"]["pos"],
-                                            self.base_proj_image, self.base_life_time * fps,
-                                            dt["base_proj"]["angle"], "player", player.inf(),
-                                            (self.base_splash_coeff if self.base_splash_coeff else 0),
-                                            self.base_splash_image, self.base_splash_size))
-        if "alt_proj" in dt:
-            self.proj_lst.append(Projectile(self.alt_armor_pen, self.alt_proj_speed, self.alt_dmg, dt["alt_proj"]["pos"],
-                                            self.alt_proj_image, self.alt_life_time * fps,
-                                            dt["alt_proj"]["angle"], "player", player.inf(),
-                                            (self.alt_splash_coeff if self.alt_splash_coeff else 0),
-                                            self.alt_splash_image, self.alt_splash_size))
+        if "proj" in dt:
+            proj = Projectile(dt["proj"]["armor_pen"], dt["proj"]["proj_speed"], dt["proj"]["dmg"], dt["proj"]["pos"],
+                           dt["proj"]["proj_img"], dt["proj"]["lifetime"] * fps, dt["proj"]["angle"], "player",
+                           do_splash=dt["proj"].get("splash_coeff", 0), splash_img=dt["proj"].get("splash_img", None),
+                           splash_size=dt["proj"].get("size", 0), size_growth=dt["proj"].get("size_growth", 1),
+                           speed_growth=dt["proj"].get("speed_growth", 1), dmg_g=dt["proj"].get("dmg_g", 1),
+                           pen_g=dt["proj"].get("pen_g", 1))
+            anim = Animation("reload_animation", fps / dt["proj"]["ats"], self.x + self.w // 2, self.y - self.h)
 
     def base_attack(self):
         if not self.is_attacking and self.cur_atk_type == "base":
@@ -789,9 +754,10 @@ class Ranger_weapon(pygame.sprite.Sprite):
         return self.is_attacking
 
     def ch_atk_mode(self):
-        if self.alt_ats and self.cur_atk_type != "changing":
+        if "alt" in self.data and self.cur_atk_type != "changing":
             self.cur_atk_type = "changing"
-            anim = Animation("atk_type_change_animation", self.ch_time * fps, self.x, self.y - self.h)
+            anim = Animation("atk_type_change_animation",
+                             self.data["change_time"] * fps, self.x, self.y - self.h)
 
 
 class Animation(pygame.sprite.Sprite):
@@ -801,60 +767,92 @@ class Animation(pygame.sprite.Sprite):
         self.start_image = sprite_images["animations"][animation_type]
         self.image = self.start_image
         self.timer = time
+        self.center = (x + self.image.get_rect().w // 2, y + self.image.get_rect().h // 2)
         self.time = time
+        self.pos = x, y
         self.rect = self.image.get_rect().move(x, y)
-        if self.anim_type == "atk_type_change_animation":
-            self.font = pygame.font.Font(None, 15)
+        if self.anim_type == "atk_type_change_animation" or self.anim_type == "reload_animation":
+            self.font = pygame.font.Font(None, 20)
 
     def apply(self):
         self.timer -= 1
         if self.anim_type == "atk_type_change_animation":
             text = self.font.render(str(round(self.timer / fps, 2)), True, "red")
             self.image = pygame.transform.rotate(self.start_image, 2 * (self.time - self.timer))
-            screen.blit(text, (self.rect.x + self.rect.w // 2, self.rect.y + self.rect.h // 2))
+            self.rect = self.image.get_rect()
+            self.rect.x, self.rect.y = self.center[0] - self.image.get_rect().w // 2, self.center[1] - self.image.get_rect().h // 2
+            screen.blit(text, (self.rect.x + self.rect.w // 2 - 13, self.rect.y + self.rect.h // 2 - 6))
+        elif self.anim_type == "reload_animation":
+            text = self.font.render(str(round(self.timer / fps, 2)), True, "green")
+            self.image = pygame.transform.rotate(self.start_image, 2 * (self.time - self.timer))
+            self.rect = self.image.get_rect()
+            self.rect.x, self.rect.y = self.center[0] - self.image.get_rect().w // 2, self.center[1] - self.image.get_rect().h // 2
+            screen.blit(text, (self.rect.x + self.rect.w // 2 - 13, self.rect.y + self.rect.h // 2 - 6))
         if self.timer <= 0:
             self.kill()
 
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, lives, speed, dmg, cords, img, lifetime, angle, team, wcs, do_splash, splash_img, splash_size):
+    def __init__(self, lives, speed, dmg, cords, img, lifetime, angle, team, do_splash=0, splash_img=None,
+                 splash_size=0, size_growth=1, speed_growth=1, dmg_g=1, pen_g=1):
         super().__init__(proj_gr, alls, transition_killable)
+        wcs = player.inf()
         self.image = pygame.transform.rotate(img, -angle)
+        self.start_image = self.image
         self.angle = angle
         self.lifetimer = lifetime
-        self.rect = self.image.get_rect().move(cords)
+        self.lifetime = lifetime
+        self.center = list(cords)
+        self.rect = self.image.get_rect().move(self.center[0] - self.image.get_rect().w // 2, self.center[1] - self.image.get_rect().h // 2)
         self.wcs = FormalRect(wcs.rect.x, wcs.rect.y, self.rect.w, self.rect.h)
         self.dmg = dmg
-        self.lives = lives
+        self.hits = 0
+        self.pen = lives
         self.speed = speed
         self.team = team
         self.block = []
         self.ds = do_splash
         self.splash_img = splash_img
         self.splash_size = splash_size
+        self.size_growth = size_growth
+        self.speed_growth = speed_growth
+        self.dmg_growth = dmg_g
+        self.penetration_growth = pen_g
 
     def apply(self):
         self.lifetimer -= 1
-        self.rect.x += self.speed * cos(radians(self.angle)) / fps
-        self.rect.y += self.speed * sin(radians(self.angle)) / fps
-        self.wcs.rect.x += self.speed * cos(radians(self.angle)) / fps
-        self.wcs.rect.y += self.speed * sin(radians(self.angle)) / fps
+        if self.size_growth > 1:
+            self.image = pygame.transform.scale_by(self.start_image, (self.size_growth **
+                                                                      ((self.lifetime - self.lifetimer) / fps)))
+        self.rect.w, self.rect.h = self.image.get_rect().w, self.image.get_rect().h
+        self.center[0] += self.speed * cos(radians(self.angle)) / fps * (self.speed_growth **
+                                                                      ((self.lifetime - self.lifetimer) / fps))
+        self.center[1] += self.speed * sin(radians(self.angle)) / fps * (self.speed_growth **
+                                                                      ((self.lifetime - self.lifetimer) / fps))
+        self.rect.x, self.rect.y = self.center[0] - self.rect.w // 2, self.center[1] - self.rect.h // 2
+        self.wcs.rect.x += self.speed * cos(radians(self.angle)) / fps * (self.speed_growth **
+                                                                      ((self.lifetime - self.lifetimer) / fps))
+        self.wcs.rect.y += self.speed * sin(radians(self.angle)) / fps * (self.speed_growth **
+                                                                      ((self.lifetime - self.lifetimer) / fps))
+        self.pen = self.pen * (self.penetration_growth ** (1 / fps))
         ret = pygame.sprite.spritecollide(self, enemies, False)
         if ret:
             for i in ret:
-                if i not in self.block and self.lives > 0:
-                    i.get_damage(self.dmg, 0, "ranger")
+                if i not in self.block and self.hits <= self.pen:
+                    i.get_damage(self.dmg * (self.speed_growth ** ((self.lifetime - self.lifetimer) / fps)),
+                                 0, "ranger")
                     self.block.append(i)
-                    self.lives -= 1
-        if self.lives <= 0 or any([pygame.sprite.spritecollideany(self.wcs, walls[i]) for i in walls]) or self.lifetimer <= 0:
+                    self.hits += 1
+        if self.pen <= self.hits or any([pygame.sprite.spritecollideany(self.wcs, walls[i]) for i in walls]) or self.lifetimer <= 0:
             if self.ds:
-                s = Splash(self.dmg * self.ds, [self.rect.x + self.rect.w // 2, self.rect.y + self.rect.h // 2],
+                s = Splash(self.dmg * (self.dmg_growth ** ((self.lifetime - self.lifetimer) / fps)) * self.ds,
+                           [self.rect.x + self.rect.w // 2, self.rect.y + self.rect.h // 2],
                            self.splash_img, self.splash_size, self.team)
             self.kill()
 
     def chpos(self, x, y):
-        self.rect.x -= x
-        self.rect.y -= y
+        self.center[0] -= x * (self.speed_growth ** ((self.lifetime - self.lifetimer) / fps))
+        self.center[1] -= y * (self.speed_growth ** ((self.lifetime - self.lifetimer) / fps))
 
 
 class Splash(pygame.sprite.Sprite):
@@ -933,120 +931,101 @@ if __name__ == "__main__":
     player = None
     weapon = None
 
-    sprite_images = {'walls': {"hu": get_image('Other/Wall_brick_horizontal.png', False),
-                               "hd": pygame.transform.rotate(get_image('Other/Wall_brick_horizontal.png', False), 180),
-                               "vl": get_image('Other/Wall_brick_vertical.png', False),
-                               "vr": pygame.transform.rotate(get_image('Other/Wall_brick_vertical.png', False), 180)},
-                     'portals': {"room_transition": get_image("Other/Portal.png", True)},
-                     'heals_consumable': {"healing_heart": get_image("Other/Healing_heart.png", True),
-                                          "healing_heart_used": get_image("Other/Healing_heart_used.png", True)},
-                     'bars': {"player":
-                                  {"left": get_image("Other/Health_bar_left.png", True),
-                                   "medium": get_image("Other/Health_bar_medium.png", True),
-                                   "right": get_image("Other/Health_bar_right.png", True)}},
+    sprite_images = {'walls': {'hu': get_image('Other/Wall_brick_horizontal.png', False),
+                               'hd': pygame.transform.rotate(get_image('Other/Wall_brick_horizontal.png', False), 180),
+                               'vl': get_image('Other/Wall_brick_vertical.png', False),
+                               'vr': pygame.transform.rotate(get_image('Other/Wall_brick_vertical.png', False), 180)},
+                     'portals': {'room_transition': get_image('Other/Portal.png', True)},
+                     'heals_consumable': {'healing_heart': get_image('Other/Healing_heart.png', True),
+                                          'healing_heart_used': get_image('Other/Healing_heart_used.png', True)},
+                     'bars': {'player':
+                                  {'left': get_image('Other/Health_bar_left.png', True),
+                                   'medium': get_image('Other/Health_bar_medium.png', True),
+                                   'right': get_image('Other/Health_bar_right.png', True)}},
                      'floor': {1: get_image('Other/Floor_brick_1.png', False),
                                2: get_image('Other/Floor_brick_2.png', False),
                                3: get_image('Other/Floor_brick_3.png', False)},
-                     'player': {"warrior": [get_image('Armor/Warrior_armor.png', True),
+                     'player': {'warrior': [get_image('Armor/Warrior_armor.png', True),
                                             pygame.transform.flip(get_image('Armor/Warrior_armor.png', True), 1, 0)],
-                                "ranger": [get_image('Armor/Ranger_armor.png', True),
+                                'ranger': [get_image('Armor/Ranger_armor.png', True),
                                            pygame.transform.flip(get_image('Armor/Ranger_armor.png', True), 1, 0)]},
-                     'animations': {"atk_type_change_animation": get_image("Other/Weapon_change_animation.png", True)},
-                     'enemies': {"close_combat":
-                                     {"ghast": get_image('Enemies/Ghast.png', True),
-                                      "demon_ghast": get_image('Enemies/Demon_ghast.png', True),
-                                      "spider": get_image("Enemies/Spider.png", True)}},
-                     'war_weapons': {"default":
-                                         {"stag_blade": [get_image("Warrior/Stagnum_blade.png", True),
-                                                         pygame.transform.flip(
-                                                             get_image("Warrior/Stagnum_blade.png", True), 1,
-                                                             0)],
-                                          },
-                                     "hold":
-                                         {"stag_blade": [get_image("Warrior/Stagnum_blade_handed.png", True),
-                                                         pygame.transform.flip(
-                                                             get_image("Warrior/Stagnum_blade_handed.png", True), 1,
-                                                             0)],
-                                          },
-                                     "base_attack":
-                                         {"stag_blade": [get_image("Warrior/Stagnum_blade_attack.png", True),
-                                                         pygame.transform.flip(
-                                                             get_image("Warrior/Stagnum_blade_attack.png", True), 1,
-                                                             0)],  # не забыть про новые спрайты для времмы
-                                          }},
-                     'ran_weapons': {"default":
-                                         {"handgun": [get_image("Ranger/Handgun.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Handgun.png", True),
-                                                                            1, 0)],
-                                          "volcano": [get_image("Ranger/Volcano.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Volcano.png", True),
-                                                                            1, 0)],
-                                          "moon_blessing": [get_image("Ranger/Moon_blessing.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Moon_blessing.png", True),
-                                                                            1, 0)],
-                                          "planetar_bomber": [get_image("Ranger/Planetar_bomber.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Planetar_bomber.png", True),
-                                                                            1, 0)]},
-                                     "hold":
-                                         {"handgun": [get_image("Ranger/Handgun.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Handgun.png", True),
-                                                                            1, 0)],
-                                          "volcano": [get_image("Ranger/Volcano.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Volcano.png", True),
-                                                                            1, 0)],
-                                          "moon_blessing": [get_image("Ranger/Moon_blessing.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Moon_blessing.png", True),
-                                                                            1, 0)],
-                                          "planetar_bomber": [get_image("Ranger/Planetar_bomber.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Planetar_bomber.png", True),
-                                                                            1, 0)]},
-                                     "alt_hold":
-                                         {"planetar_bomber": [pygame.transform.flip(get_image("Ranger/Planetar_bomber.png", True),
-                                                                            1, 0),
-                                                      get_image("Ranger/Planetar_bomber.png", True)]},
-                                     "base_attack":
-                                         {"handgun": [get_image("Ranger/Handgun.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Handgun.png", True),
-                                                                            1, 0)],
-                                          "volcano": [get_image("Ranger/Volcano.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Volcano.png", True),
-                                                                            1, 0)],
-                                          "moon_blessing": [get_image("Ranger/Moon_blessing.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Moon_blessing.png", True),
-                                                                            1, 0)],
-                                          "planetar_bomber": [get_image("Ranger/Planetar_bomber.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Planetar_bomber.png", True),
-                                                                            1, 0)]},
-                                     "alt_attack":
-                                         {"moon_blessing": [get_image("Ranger/Moon_blessing.png", True),
-                                                      pygame.transform.flip(get_image("Ranger/Moon_blessing.png", True),
-                                                                            1, 0)],
-                                          "planetar_bomber": [pygame.transform.flip(get_image("Ranger/Planetar_bomber.png", True),
-                                                                            1, 0),
-                                                      get_image("Ranger/Planetar_bomber.png", True)]},
-                                     "base_proj":
-                                         {"handgun": pygame.transform.flip(get_image("Ranger/Ammo/Handgun_bullet.png", True),
-                                                                            1, 0),
-                                          "volcano": pygame.transform.flip(get_image("Ranger/Ammo/Volcano_bullet.png", True),
-                                                                            1, 0),
-                                          "moon_blessing": pygame.transform.flip(get_image("Ranger/Ammo/Moon_blessing_arrow.png", True),
-                                                                            1, 0),
-                                          "planetar_bomber": pygame.transform.flip(get_image("Ranger/Ammo/Planetar_bomber_rocket_small.png", True),
-                                                                            1, 0)
-                                          },
-                                     "alt_proj":
-                                         {"moon_blessing": pygame.transform.flip(get_image("Ranger/Ammo/Moon_blessing_ray.png", True),
-                                                                            1, 0),
-                                          "planetar_bomber": pygame.transform.flip(get_image("Ranger/Ammo/Planetar_bomber_rocket_big.png", True),
-                                                                            1, 0)
-                                          },
-                                     "base_splash":
-                                         {"planetar_bomber": get_image(
-                                             "Ranger/Splashes/Planetar_bomber_rocket_small_splash.png", True)},
-                                     "alt_splash":
-                                         {"planetar_bomber": get_image(
-                                             "Ranger/Splashes/Planetar_bomber_rocket_big_splash.png", True)}
-                                     }}
+                     'animations': {'atk_type_change_animation': get_image('Other/Weapon_change_animation.png', True),
+                                    'reload_animation': get_image('Other/Reload_animation.png', True)},
+                     'enemies': {'close_combat':
+                                     {'ghast': get_image('Enemies/Ghast.png', True),
+                                      'demon_ghast': get_image('Enemies/Demon_ghast.png', True),
+                                      'spider': get_image('Enemies/Spider.png', True)}},
+                     'war_weapons':
+               {'stag_blade':
+                    {'default': [get_image('Warrior/Stagnum_blade.png', True),
+                                 pygame.transform.flip(get_image('Warrior/Stagnum_blade.png', True), 1, 0)],
+                     'hold': [get_image('Warrior/Stagnum_blade.png', True),
+                                 pygame.transform.flip(get_image('Warrior/Stagnum_blade.png', True), 1, 0)],
+                     'base_attack': [get_image('Warrior/Stagnum_blade.png', True),
+                                 pygame.transform.flip(get_image('Warrior/Stagnum_blade.png', True), 1, 0)]}},
+           'ran_weapons':
+               {'handgun':
+                    {'default': [get_image('Ranger/Handgun.png', True),
+                                pygame.transform.flip(get_image('Ranger/Handgun.png', True), 1, 0)],
+                     'hold': [get_image('Ranger/Handgun.png', True),
+                                pygame.transform.flip(get_image('Ranger/Handgun.png', True), 1, 0)],
+                     'base_attack': [get_image('Ranger/Handgun.png', True),
+                                pygame.transform.flip(get_image('Ranger/Handgun.png', True), 1, 0)],
+                     'base_proj': pygame.transform.flip(get_image('Ranger/Ammo/Handgun_bullet.png', True), 1, 0)},
+                'volcano':
+                    {'default': [get_image('Ranger/Volcano.png', True),
+                                pygame.transform.flip(get_image('Ranger/Volcano.png', True), 1, 0)],
+                     'hold': [get_image('Ranger/Volcano.png', True),
+                                pygame.transform.flip(get_image('Ranger/Volcano.png', True), 1, 0)],
+                     'base_attack':[get_image('Ranger/Volcano.png', True),
+                                pygame.transform.flip(get_image('Ranger/Volcano.png', True), 1, 0)],
+                     'base_proj': pygame.transform.flip(get_image('Ranger/Ammo/Volcano_bullet.png', True), 1, 0)},
+                'moon_blessing':
+                    {'default': [get_image('Ranger/Moon_blessing.png', True),
+                                pygame.transform.flip(get_image('Ranger/Moon_blessing.png', True), 1, 0)],
+                     'hold': [get_image('Ranger/Moon_blessing.png', True),
+                                pygame.transform.flip(get_image('Ranger/Moon_blessing.png', True), 1, 0)],
+                     'alt_hold': [get_image('Ranger/Moon_blessing.png', True),
+                                pygame.transform.flip(get_image('Ranger/Moon_blessing.png', True), 1, 0)],
+                     'base_attack': [get_image('Ranger/Moon_blessing.png', True),
+                                pygame.transform.flip(get_image('Ranger/Moon_blessing.png', True), 1, 0)],
+                     'alt_attack': [get_image('Ranger/Moon_blessing.png', True),
+                                pygame.transform.flip(get_image('Ranger/Moon_blessing.png', True), 1, 0)],
+                     'base_proj': pygame.transform.flip(get_image('Ranger/Ammo/Moon_blessing_arrow.png', True), 1, 0),
+                     'alt_proj': pygame.transform.flip(get_image('Ranger/Ammo/Moon_blessing_ray.png', True), 1, 0)},
+                'planetar_bomber':
+                    {'default': [get_image('Ranger/Planetar_bomber.png', True),
+                                 pygame.transform.flip(get_image('Ranger/Planetar_bomber.png', True), 1, 0)],
+                     'hold': [get_image('Ranger/Planetar_bomber.png', True),
+                              pygame.transform.flip(get_image('Ranger/Planetar_bomber.png', True), 1, 0)],
+                     'alt_hold': [pygame.transform.flip(get_image('Ranger/Planetar_bomber.png', True), 1, 0),
+                                  get_image('Ranger/Planetar_bomber.png', True)],
+                     'base_attack': [get_image('Ranger/Planetar_bomber.png', True),
+                                     pygame.transform.flip(get_image('Ranger/Planetar_bomber.png', True), 1, 0)],
+                     'alt_attack': [pygame.transform.flip(get_image('Ranger/Planetar_bomber.png', True), 1, 0),
+                                    get_image('Ranger/Planetar_bomber.png', True)],
+                     'base_proj': pygame.transform.flip(get_image('Ranger/Ammo/Planetar_bomber_rocket_small.png',
+                                                                  True), 1, 0),
+                     'alt_proj': pygame.transform.flip(get_image('Ranger/Ammo/Planetar_bomber_rocket_big.png',
+                                                                 True), 1, 0),
+                     'base_splash': get_image('Ranger/Splashes/Planetar_bomber_rocket_small_splash.png', True),
+                     'alt_splash': get_image('Ranger/Splashes/Planetar_bomber_rocket_big_splash.png', True)},
+                "rail_minigun":
+                    {'default': [get_image('Ranger/Rail_minigun/Rail_minigun.png', True),
+                                 pygame.transform.flip(get_image('Ranger/Rail_minigun/Rail_minigun.png', True), 1, 0)],
+                     'hold': [get_image('Ranger/Rail_minigun/Rail_minigun.png', True),
+                              pygame.transform.flip(get_image('Ranger/Rail_minigun/Rail_minigun.png', True), 1, 0)],
+                     'alt_hold': [get_image('Ranger/Rail_minigun/Rail_minigun.png', True),
+                                     pygame.transform.flip(get_image('Ranger/Rail_minigun/Rail_minigun.png', True), 1, 0)],
+                     'base_attack': [get_image('Ranger/Rail_minigun/Rail_minigun_base_attack.png', True),
+                                     pygame.transform.flip(get_image('Ranger/Rail_minigun/Rail_minigun_base_attack.png', True), 1, 0)],
+                     'alt_attack': [get_image('Ranger/Rail_minigun/Rail_minigun_alt_attack.png', True),
+                                     pygame.transform.flip(get_image('Ranger/Rail_minigun/Rail_minigun_alt_attack.png', True), 1, 0)],
+                     'base_proj': pygame.transform.flip(get_image('Ranger/Ammo/Rail_minigun_bullet.png',
+                                                                  True), 1, 0),
+                     'alt_proj': pygame.transform.flip(pygame.transform.scale_by(get_image('Ranger/Ammo/Rail_minigun_ray.png',
+                                                                 True), 2), 1, 0),
+                     'base_splash': get_image('Ranger/Splashes/Rail_minigun_bullet_splash.png', True)}}}
     damage = Damage()
     screen_x = -levels_size[1][0] // 2 + SX // 2
     screen_y = -levels_size[1][1] // 2 + SY // 2
@@ -1121,11 +1100,10 @@ if __name__ == "__main__":
                             player = Player("warrior")
                             weapon = Warrior_weapon(cur_rank, cur_weap, weapon_class)
                         if cur_class == "ranger":
-                            cur_weap = "planetar_bomber"
-                            weapon_class = "rocket_launchers"
+                            cur_weap = "rail_minigun"
                             cur_rank = "SR"
                             player = Player("ranger")
-                            weapon = Ranger_weapon(cur_rank, cur_weap, weapon_class)
+                            weapon = Ranger_weapon(cur_rank, cur_weap)
                         player_health_bar = PlayerHealthBar(200, 150, classes[cur_class]["hp"])
                 elif fon_set == "game" and event.button == pygame.BUTTON_LEFT:
                     atk_butt_pressed = True
