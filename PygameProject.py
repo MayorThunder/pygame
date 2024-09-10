@@ -2,7 +2,8 @@ import os, pygame
 import sys
 from math import sin, cos, radians
 from random import randint, choice
-from Weapon_work_list import Stagnum_blade, Handgun, Volcano, Moon_blessing, Planetar_bomber, Rail_minigun
+from Weapon_work_list import Stagnum_blade, Handgun, Volcano, Moon_blessing, Planetar_bomber, Rail_minigun, Shotgun, \
+    Plasma_flow
 
 SX, SY = 1920, 1080
 alls = pygame.sprite.Group()
@@ -48,12 +49,11 @@ classes = {"warrior": {"speed": 240, "hp": 800, "protection": 0.5},
 
 fon_set = None
 splash_lifetime_const = 0.25
-
 attacks = {"blade_default": "stag_blade"}
 
 game_enemies = {"close_combat":
                     {"ghast":
-                         {"speed": 150, "ats": 1, "hp": 1000, "contact_dmg": 100, "ats_add": 0.05,
+                         {"speed": 180, "ats": 1, "hp": 1000, "contact_dmg": 100, "ats_add": 0.05,
                           "hp_add": 100, "contact_dmg_add": 10, "speed_add": 4, "coeff": 0.1},
                      "demon_ghast":
                          {"speed": 60, "ats": 0.6, "hp": 4000, "contact_dmg": 300, "ats_add": 0.05,
@@ -62,6 +62,76 @@ game_enemies = {"close_combat":
                          {"speed": 360, "ats": 2, "hp": 150, "contact_dmg": 30, "ats_add": 0.05,
                           "hp_add": 7, "contact_dmg_add": 2, "speed_add": 4, "coeff": 0.05}
                      }}
+
+effect_list = {"electrified":
+                   {"tier_1": {"dmg_get_coeff": 1.1, "dmg_dealt_coeff": 0.95, "speed_coeff": 0.92, "hp_reduction_per_sec": 50},
+                    "tier_2": {"dmg_get_coeff": 1.175, "dmg_dealt_coeff": 0.9, "speed_coeff": 0.84, "hp_reduction_per_sec": 100},
+                    "tier_3": {"dmg_get_coeff": 1.25, "dmg_dealt_coeff": 0.85, "speed_coeff": 0.76, "hp_reduction_per_sec": 150},
+                    "tier_4": {"dmg_get_coeff": 1.325, "dmg_dealt_coeff": 0.8, "speed_coeff": 0.68, "hp_reduction_per_sec": 200},
+                    "tier_5": {"dmg_get_coeff": 1.4, "dmg_dealt_coeff": 0.75, "speed_coeff": 0.6, "hp_reduction_per_sec": 250}},
+               "blinded":
+                   {"no_tier": {"dmg_dealt_coeff": 0.5, "speed_coeff": 0.4}},
+               "stuned":
+                   {"no_tier": {"dmg_dealt_coeff": 0.6, "speed_coeff": 0.8, "dmg_get_coeff": 1.5}},
+               "flamed":
+                   {"tier_1": {"dmg_get_coeff": 0.94, "dmg_dealt_coeff": 0.94, "hp_reduction_per_sec": 150},
+                    "tier_2": {"dmg_get_coeff": 0.91, "dmg_dealt_coeff": 0.91, "hp_reduction_per_sec": 500},
+                    "tier_3": {"dmg_get_coeff": 0.88, "dmg_dealt_coeff": 0.88, "hp_reduction_per_sec": 850},
+                    "tier_4": {"dmg_get_coeff": 0.85, "dmg_dealt_coeff": 0.85, "hp_reduction_per_sec": 1200},
+                    "tier_5": {"dmg_get_coeff": 0.82, "dmg_dealt_coeff": 0.82, "hp_reduction_per_sec": 1550}},
+               "timed":
+                   {"tier_1": {"ats_coeff": 0.85, "speed_coeff": 0.85},
+                    "tier_2": {"ats_coeff": 0.7, "speed_coeff": 0.7},
+                    "tier_3": {"ats_coeff": 0.55, "speed_coeff": 0.55},
+                    "tier_4": {"ats_coeff": 0.4, "speed_coeff": 0.4},
+                    "tier_5": {"ats_coeff": 0.25, "speed_coeff": 0.25}},
+               "penetrated":
+                   {"tier_1": {"dmg_get_coeff": 1.25, "speed_coeff": 1.05},
+                    "tier_2": {"dmg_get_coeff": 1.5, "speed_coeff": 1.1},
+                    "tier_3": {"dmg_get_coeff": 1.75, "speed_coeff": 1.15},
+                    "tier_4": {"dmg_get_coeff": 2, "speed_coeff": 1.2},
+                    "tier_5": {"dmg_get_coeff": 2.5, "speed_coeff": 1.25}},
+               "unstability":
+                   {"tier_1": {"dmg_get_coeff": 1.2, "speed_coeff": 0.9, "hp_reduction_per_sec": 100},
+                    "tier_2": {"dmg_get_coeff": 1.4, "speed_coeff": 0.8, "hp_reduction_per_sec": 250},
+                    "tier_3": {"dmg_get_coeff": 1.6, "speed_coeff": 0.7, "hp_reduction_per_sec": 400},
+                    "tier_4": {"dmg_get_coeff": 1.8, "speed_coeff": 0.6, "hp_reduction_per_sec": 550},
+                    "tier_5": {"dmg_get_coeff": 2, "speed_coeff": 0.5, "hp_reduction_per_sec": 700}},
+               "sky_revenge":
+                   {"tier_1": {"dmg_get_coeff": 1.2, "speed_coeff": 1.1, "dmg_dealt_coeff": 1.1,
+                               "hp_reduction_per_sec": 100},
+                    "tier_2": {"dmg_get_coeff": 1.6, "speed_coeff": 1.15, "dmg_dealt_coeff": 1.2,
+                               "hp_reduction_per_sec": 300},
+                    "tier_3": {"dmg_get_coeff": 2, "speed_coeff": 1.2, "dmg_dealt_coeff": 1.3,
+                               "hp_reduction_per_sec": 500},
+                    "tier_4": {"dmg_get_coeff": 2.5, "speed_coeff": 1.25, "dmg_dealt_coeff": 1.4,
+                               "hp_reduction_per_sec": 750},
+                    "tier_5": {"dmg_get_coeff": 3, "speed_coeff": 1.35, "dmg_dealt_coeff": 1.5,
+                               "hp_reduction_per_sec": 1000}},
+               "god_rage":
+                   {"tier_1": {"dmg_get_coeff": 1.1, "speed_coeff": 0.95, "hp_reduction_per_sec": 100},
+                    "tier_2": {"dmg_get_coeff": 1.25, "speed_coeff": 0.875, "hp_reduction_per_sec": 250},
+                    "tier_3": {"dmg_get_coeff": 1.4, "speed_coeff": 0.8, "hp_reduction_per_sec": 400},
+                    "tier_4": {"dmg_get_coeff": 1.55, "speed_coeff": 0.725, "hp_reduction_per_sec": 550},
+                    "tier_5": {"dmg_get_coeff": 1.7, "speed_coeff": 0.65, "hp_reduction_per_sec": 750}},
+               "slayed":
+                   {"tier_1": {"dmg_get_coeff": 1.08, "speed_coeff": 0.95, "dmg_get_from_debuffs_coeff": 1.4,
+                               "hp_reduction_per_sec": 50},
+                    "tier_2": {"dmg_get_coeff": 1.16, "speed_coeff": 0.9, "dmg_get_from_debuffs_coeff": 1.8,
+                               "hp_reduction_per_sec": 200},
+                    "tier_3": {"dmg_get_coeff": 1.24, "speed_coeff": 0.85, "dmg_get_from_debuffs_coeff": 2.2,
+                               "hp_reduction_per_sec": 350},
+                    "tier_4": {"dmg_get_coeff": 1.32, "speed_coeff": 0.8, "dmg_get_from_debuffs_coeff": 2.6,
+                               "hp_reduction_per_sec": 500},
+                    "tier_5": {"dmg_get_coeff": 1.4, "speed_coeff": 0.75, "dmg_get_from_debuffs_coeff": 3,
+                               "hp_reduction_per_sec": 650}},
+               "freezed":
+                   {"tier_1": {"dmg_get_coeff": 0.96, "speed_coeff": 0.92, "dmg_get_from_debuffs_coeff": 0.95},
+                    "tier_2": {"dmg_get_coeff": 0.92, "speed_coeff": 0.84, "dmg_get_from_debuffs_coeff": 0.9},
+                    "tier_3": {"dmg_get_coeff": 0.88, "speed_coeff": 0.76, "dmg_get_from_debuffs_coeff": 0.85},
+                    "tier_4": {"dmg_get_coeff": 0.84, "speed_coeff": 0.68, "dmg_get_from_debuffs_coeff": 0.8},
+                    "tier_5": {"dmg_get_coeff": 0.8, "speed_coeff": 0.6, "dmg_get_from_debuffs_coeff": 0.75}}
+               }
 
 game_weapons = {"warrior":
                     {"swords":
@@ -85,45 +155,91 @@ game_weapons = {"warrior":
                                     "lifetime": 2.3}},
                           "volcano":
                               {"base":
-                                   {"D": {"dmg": 240, "ats": 19.8, "proj_speed": 560},
-                                    "C": {"dmg": 248, "ats": 21.6, "proj_speed": 573},
-                                    "B": {"dmg": 264, "ats": 24.3, "proj_speed": 600},
-                                    "A": {"dmg": 280, "ats": 27, "proj_speed": 630},
-                                    "S": {"dmg": 296, "ats": 30.6, "proj_speed": 660},
-                                    "SR": {"dmg": 320, "ats": 36, "proj_speed": 700},
-                                    "lifetime": 1.8}},
+                                   {"D": {"dmg": 240, "ats": 19.8, "proj_speed": 840, "effect_len":
+                                       {"flamed": 1}},
+                                    "C": {"dmg": 248, "ats": 21.6, "proj_speed": 858, "effect_len":
+                                       {"flamed": 1.2}},
+                                    "B": {"dmg": 264, "ats": 24.3, "proj_speed": 900, "effect_len":
+                                       {"flamed": 1.5}},
+                                    "A": {"dmg": 280, "ats": 27, "proj_speed": 945, "effect_len":
+                                       {"flamed": 1.8}},
+                                    "S": {"dmg": 296, "ats": 30.6, "proj_speed": 990, "effect_len":
+                                       {"flamed": 3}},
+                                    "SR": {"dmg": 320, "ats": 36, "proj_speed": 1050, "effect_len":
+                                       {"flamed": 2.3}},
+                                    "lifetime": 1.8,
+                                    "attack_effect": {"flamed": "tier_4"},
+                                    "angle": 5}},
+                          "plasma_flow":
+                              {"base":
+                                   {"D": {"dps": 1000, "proj_speed": 2000, "armor_pen": 1000, "effect_len":
+                                       {"electrified": 3}},
+                                    "C": {"dps": 1200, "proj_speed": 2000, "armor_pen": 1000, "effect_len":
+                                        {"electrified": 3.5}},
+                                    "B": {"dps": 1500, "proj_speed": 2000, "armor_pen": 1000, "effect_len":
+                                        {"electrified": 4}},
+                                    "A": {"dps": 1900, "proj_speed": 2000, "armor_pen": 1000, "effect_len":
+                                        {"electrified": 4.5}},
+                                    "S": {"dps": 2500, "proj_speed": 2000, "armor_pen": 1000, "effect_len":
+                                        {"electrified": 5.5}},
+                                    "SR": {"dps": 3200, "proj_speed": 2000, "armor_pen": 1000, "effect_len":
+                                        {"electrified": 6.5}},
+                                    "attack_effect": {"electrified": "tier_2"},
+                                    "lifetime": 0.4,
+                                    "speed_growth": 0.01,
+                                    "dmg_growth": 0.25,
+                                    "size_growth": 9}},
+                          "shotgun":
+                              {"base":
+                                   {"D": {"dmg": 380, "ats": 0.75, "proj_speed": 840, "bullets": 4, "width": 45, "effect_len":
+                                        {"stuned": 0.2}},
+                                    "C": {"dmg": 400, "ats": 0.8, "proj_speed": 858, "bullets": 4, "width": 43.5, "effect_len":
+                                        {"stuned": 0.21}},
+                                    "B": {"dmg": 425, "ats": 0.85, "proj_speed": 900, "bullets": 5, "width": 41.25, "effect_len":
+                                        {"stuned": 0.23}},
+                                    "A": {"dmg": 460, "ats": 0.95, "proj_speed": 945, "bullets": 5, "width": 38.25, "effect_len":
+                                        {"stuned": 0.26}},
+                                    "S": {"dmg": 500, "ats": 1.07, "proj_speed": 990, "bullets": 5, "width": 34.5, "effect_len":
+                                        {"stuned": 0.3}},
+                                    "SR": {"dmg": 550, "ats": 1.25, "proj_speed": 1050, "bullets": 6, "width": 30, "effect_len":
+                                        {"stuned": 0.35}},
+                                    "lifetime": 0.6,
+                                    "dmg_growth": 0.2,
+                                    "attack_effect": {"stuned": "no_tier"}}},
                          "moon_blessing":
                               {"base":
                                    {"D": {"dmg": 3500, "ats": 1.05, "proj_speed": 960,
-                                          "armor_pen": 5},
+                                          "armor_pen": 5, "effect_len": 1.5},
                                     "C": {"dmg": 3600, "ats": 1.125, "proj_speed": 980,
-                                          "armor_pen": 5},
+                                          "armor_pen": 5, "effect_len": 1.6},
                                     "B": {"dmg": 3800, "ats": 1.23, "proj_speed": 1010,
-                                          "armor_pen": 5},
+                                          "armor_pen": 5, "effect_len": 1.75},
                                     "A": {"dmg": 4050, "ats": 1.38, "proj_speed": 1060,
-                                          "armor_pen": 6},
+                                          "armor_pen": 6, "effect_len": 1.95},
                                     "S": {"dmg": 4400, "ats": 1.575, "proj_speed": 1120,
-                                          "armor_pen": 6},
+                                          "armor_pen": 6, "effect_len": 2.2},
                                     "SR": {"dmg": 5000, "ats": 1.8, "proj_speed": 1200,
-                                          "armor_pen": 7},
+                                          "armor_pen": 7, "effect_len": 2.5},
                                     "lifetime": 2.5,
+                                    "attack_effect": {"god_rage": "tier_3"},
                                     "speed_growth": 1.5,
                                     "dmg_growth": 1.2,
                                     "penetration_growth": 1.2,
                                     "size_growth": 3},
                                "alt":
                                    {"D": {"dmg": 1000, "ats": 2.4, "proj_speed": 480,
-                                          "armor_pen": 2},
+                                          "armor_pen": 2, "effect_len": 0.5},
                                     "C": {"dmg": 1070, "ats": 2.5, "proj_speed": 490,
-                                          "armor_pen": 2},
+                                          "armor_pen": 2, "effect_len": 0.6},
                                     "B": {"dmg": 1150, "ats": 2.7, "proj_speed": 505,
-                                          "armor_pen": 2},
+                                          "armor_pen": 2, "effect_len": 0.72},
                                     "A": {"dmg": 1250, "ats": 3, "proj_speed": 530,
-                                          "armor_pen": 2},
+                                          "armor_pen": 2, "effect_len": 0.85},
                                     "S": {"dmg": 1400, "ats": 3.4, "proj_speed": 560,
-                                          "armor_pen": 3},
+                                          "armor_pen": 3, "effect_len": 1},
                                     "SR": {"dmg": 1650, "ats": 4, "proj_speed": 600,
-                                          "armor_pen": 3},
+                                          "armor_pen": 3, "effect_len": 1.2},
+                                    "attack_effect": {"sky_revenge": "tier_3"},
                                     "lifetime": 3,
                                     "size_growth": 1.8,
                                     "speed_growth": 1.5,
@@ -132,32 +248,52 @@ game_weapons = {"warrior":
                                "change_time": 1.5},
                          "planetar_bomber":
                               {"base":
-                                   {"D": {"dmg": 750, "ats": 3, "proj_speed": 640, "splash_size": 1.5},
-                                    "C": {"dmg": 780, "ats": 3.1, "proj_speed": 653, "splash_size": 1.65},
-                                    "B": {"dmg": 850, "ats": 3.3, "proj_speed": 670, "splash_size": 1.92},
-                                    "A": {"dmg": 980, "ats": 3.6, "proj_speed": 706, "splash_size": 2.25},
-                                    "S": {"dmg": 1030, "ats": 4, "proj_speed": 746, "splash_size": 2.7},
-                                    "SR": {"dmg": 1200, "ats": 4.5, "proj_speed": 800, "splash_size": 3.3},
+                                   {"D": {"dmg": 750, "ats": 3, "proj_speed": 640, "splash_size": 1.5, "effect_len":
+                                       {"electrified": 1.5}},
+                                    "C": {"dmg": 780, "ats": 3.1, "proj_speed": 653, "splash_size": 1.65, "effect_len":
+                                       {"electrified": 1.575}},
+                                    "B": {"dmg": 850, "ats": 3.3, "proj_speed": 670, "splash_size": 1.92, "effect_len":
+                                       {"electrified": 1.725}},
+                                    "A": {"dmg": 980, "ats": 3.6, "proj_speed": 706, "splash_size": 2.25, "effect_len":
+                                       {"electrified": 1.95}},
+                                    "S": {"dmg": 1030, "ats": 4, "proj_speed": 746, "splash_size": 2.7, "effect_len":
+                                       {"electrified": 2.25}},
+                                    "SR": {"dmg": 1200, "ats": 4.5, "proj_speed": 800, "splash_size": 3.3, "effect_len":
+                                       {"electrified": 2.625}},
                                     "lifetime": 2,
-                                    "splash_coeff": 0.5},
+                                    "splash_coeff": 0.5,
+                                    "speed_growth": 4,
+                                    "attack_effect": {"electrified": "tier_3"},
+                                    "splash_effect": {"electrified": "tier_2"},
+                                    "splash_effect_len": {"electrified": 1}},
                                "alt":
-                                   {"D": {"dmg": 3500, "ats": 0.5, "proj_speed": 1200, "splash_size": 1},
-                                    "C": {"dmg": 3580, "ats": 0.52, "proj_speed": 1225, "splash_size": 1.1},
-                                    "B": {"dmg": 3710, "ats": 0.55, "proj_speed": 1260, "splash_size": 1.28},
-                                    "A": {"dmg": 3890, "ats": 0.6, "proj_speed": 1325, "splash_size": 1.5},
-                                    "S": {"dmg": 4120, "ats": 0.67, "proj_speed": 1400, "splash_size": 1.8},
-                                    "SR": {"dmg": 4500, "ats": 0.75, "proj_speed": 1500, "splash_size": 2.2},
+                                   {"D": {"dmg": 3500, "ats": 0.5, "proj_speed": 1200, "splash_size": 1, "effect_len":
+                                       {"god_rage": 2, "stuned": 1}},
+                                    "C": {"dmg": 3580, "ats": 0.52, "proj_speed": 1225, "splash_size": 1.1, "effect_len":
+                                       {"god_rage": 2.1, "stuned": 1.07}},
+                                    "B": {"dmg": 3710, "ats": 0.55, "proj_speed": 1260, "splash_size": 1.28, "effect_len":
+                                       {"god_rage": 2.3, "stuned": 1.15}},
+                                    "A": {"dmg": 3890, "ats": 0.6, "proj_speed": 1325, "splash_size": 1.5, "effect_len":
+                                       {"god_rage": 2.6, "stuned": 1.25}},
+                                    "S": {"dmg": 4120, "ats": 0.67, "proj_speed": 1400, "splash_size": 1.8, "effect_len":
+                                       {"god_rage": 3, "stuned": 1.37}},
+                                    "SR": {"dmg": 4500, "ats": 0.75, "proj_speed": 1500, "splash_size": 2.2, "effect_len":
+                                       {"god_rage": 3.5, "stuned": 1.5}},
                                     "lifetime": 2.5,
-                                    "splash_coeff": 0.4},
+                                    "splash_coeff": 0.4,
+                                    "speed_growth": 4,
+                                    "attack_effect": {"stuned": "no_tier", "god_rage": "tier_4"},
+                                    "splash_effect": {"god_rage": "tier_3"},
+                                    "splash_effect_len": {"god_rage": 0.8}},
                                "change_time": 1},
                           "rail_minigun":
                               {"base":
-                                   {"D": {"dmg": 400, "ats": 12, "proj_speed": 1000, "splash_size": 1.5},
-                                    "C": {"dmg": 430, "ats": 12.5, "proj_speed": 1030, "splash_size": 1.65},
-                                    "B": {"dmg": 470, "ats": 13.5, "proj_speed": 1170, "splash_size": 1.92},
-                                    "A": {"dmg": 520, "ats": 15, "proj_speed": 1150, "splash_size": 2.25},
-                                    "S": {"dmg": 590, "ats": 17, "proj_speed": 1250, "splash_size": 2.7},
-                                    "SR": {"dmg": 700, "ats": 20, "proj_speed": 1400, "splash_size": 3.3},
+                                   {"D": {"dmg": 200, "ats": 12, "proj_speed": 1000, "splash_size": 1.5},
+                                    "C": {"dmg": 215, "ats": 12.5, "proj_speed": 1030, "splash_size": 1.65},
+                                    "B": {"dmg": 235, "ats": 13.5, "proj_speed": 1170, "splash_size": 1.92},
+                                    "A": {"dmg": 260, "ats": 15, "proj_speed": 1150, "splash_size": 2.25},
+                                    "S": {"dmg": 295, "ats": 17, "proj_speed": 1250, "splash_size": 2.7},
+                                    "SR": {"dmg": 350, "ats": 20, "proj_speed": 1400, "splash_size": 3.3},
                                     "lifetime": 2,
                                     "splash_coeff": 1},
                                "alt":
@@ -168,8 +304,8 @@ game_weapons = {"warrior":
                                     "S": {"dmg": 10000, "ats": 0.75, "proj_speed": 2200, "armor_pen": 1000},
                                     "SR": {"dmg": 12000, "ats": 0.825, "proj_speed": 2500, "armor_pen": 1000},
                                     "lifetime": 2,
-                                    "size_growth": 4,
-                                    "damage_growth": 0.75},
+                                    "size_growth": 6,
+                                    "damage_growth": 0.25},
                                "change_time": 3}
                           },
                 "mage":
@@ -183,7 +319,7 @@ game_weapons = {"warrior":
                                     "SR": {"size": 1.7, "dmg": 2250, "ats": 1.45, "AoE": 135}}}}}
 
 damage_col = {"weapons":
-                  {"warrior": "orange", "mage": "purple", "ranger": "blue"},
+                  {"warrior": "orange", "mage": "purple", "ranger": "blue", "splash": "purple", "eff": "cyan"},
               "close_combat": "red",
               "room": "black"}
 
@@ -196,22 +332,20 @@ levels_size = {
         7 * sizes["stand_room"][1] + 6 * sizes["corridor"][0] + spawn_const),
     3: (9 * sizes["stand_room"][0] + 8 * sizes["corridor"][0] + spawn_const,
         9 * sizes["stand_room"][1] + 8 * sizes["corridor"][0] + spawn_const),
-    4: (3 * sizes["stand_room"][0] + 2 * sizes["corridor"][0] + spawn_const,
-        3 * sizes["stand_room"][1] + 2 * sizes["corridor"][0] + spawn_const),
-    5: (9 * sizes["stand_room"][0] + 8 * sizes["corridor"][0] + spawn_const,
+    4: (9 * sizes["stand_room"][0] + 8 * sizes["corridor"][0] + spawn_const,
         9 * sizes["stand_room"][1] + 8 * sizes["corridor"][0] + spawn_const),
-    6: (11 * sizes["stand_room"][0] + 10 * sizes["corridor"][0] + spawn_const,
+    5: (11 * sizes["stand_room"][0] + 10 * sizes["corridor"][0] + spawn_const,
         11 * sizes["stand_room"][1] + 10 * sizes["corridor"][0] + spawn_const)
 }
 
 levels = {1: {"size": (7, 7), "iters": [[2], [2, 2], [3, 4]]},
           2: {"size": (7, 7), "iters": [[2, 2], [2, 3], [2, 3, 4]]},
           3: {"size": (9, 9), "iters": [[2], [2, 2, 3], [2, 2, 4, 2], [2, 3]]},
-          4: {"size": (3, 3), "iters": [[3, 3, 3, 4]]},
-          5: {"size": (9, 9), "iters": [[2, 2], [2, 2, 3], [2, 2, 3, 2], [2, 2, 2, 3, 4]]},
-          6: {"size": (11, 11), "iters": [[2, 2, 3], [2, 2, 2, 2, 3, 3], [2, 2, 2, 2, 3], [2, 2, 3, 4], [2, 2, 3]]}}
+          4: {"size": (9, 9), "iters": [[2, 2], [2, 2, 3], [2, 2, 3, 2], [2, 2, 2, 3, 4]]},
+          5: {"size": (11, 11), "iters": [[2, 2, 3], [2, 2, 2, 2, 3, 3], [2, 2, 2, 2, 3], [2, 2, 3, 4], [2, 2, 3]]}}
 
-enemiy_spawn = {1: {"close_combat":
+enemiy_spawn = {
+                1: {"close_combat":
                         {"standart":
                              {"ghast": {2: (2, 3), 3: (3, 4)},
                               "spider": {2: (5, 7), 3: (6, 7)}}}},
@@ -243,7 +377,7 @@ cur_weap = None
 cur_rank = None
 weapon_to_class_matcher = {"stag_blade": Stagnum_blade, "handgun": Handgun, "volcano": Volcano,
                            "moon_blessing": Moon_blessing, "planetar_bomber": Planetar_bomber,
-                           "rail_minigun": Rail_minigun}
+                           "rail_minigun": Rail_minigun, "shotgun": Shotgun, "plasma_flow": Plasma_flow}
 cur_class = "ranger"
 fps = 60
 
@@ -549,39 +683,89 @@ class Close_Combat_Enemy(pygame.sprite.Sprite):
         self.formspr = FormalRect(cx + dx, cy + dy, k.w, k.h)
         self.rect = k.move(cx + dx - player.inf().rect.x + SX // 2 - 50, cy + dy - player.inf().rect.y + SY // 2 - 50)
         self.turn = False
+        self.effects_dict = {"dmg_dealt_coeff": 1, "dmg_get_coeff": 1, "ats_coeff": 1, "speed_coeff": 1,
+                             "hp_reduction_per_sec": 0, "dmg_get_from_debuffs_coeff": 1}
+        self.cur_effects = {}
+        for i in effect_list:
+            self.cur_effects[i] = {}
+            for j in effect_list[i]:
+                self.cur_effects[i][j] = None
         self.dmg_timer = 0
         self.attack_timer = 0
+        self.effect_coldown = 0
 
     def apply(self, x, y):
         if self.cur_hp <= 0:
             self.kill()
         ret = pygame.sprite.spritecollideany(self, player_gr)
+
         if ret and not self.attack_timer:
-            self.attack_timer = fps // self.ats + 1
-            ret.get_damage(self.dmg, self.entype, 0)
+            self.attack_timer = (fps // self.ats + 1) * self.effects_dict["ats_coeff"]
+            ret.get_damage(self.dmg * self.effects_dict["dmg_dealt_coeff"], self.entype, 0)
         elif self.attack_timer:
             self.attack_timer -= 1
         self.rect.x -= x
         self.rect.y -= y
         if self.dmg_timer:
             self.dmg_timer -= 1
-
         deltax = player.inf().rect.x - self.formspr.rect.x
         deltay = player.inf().rect.y + player.inf().rect.h // 2 - self.formspr.rect.y
         delta = (deltax ** 2 + deltay ** 2) ** 0.5
         if deltax or deltay:
-            self.rect.x += (self.v / fps) * (deltax / delta)
-            self.formspr.rect.x += (self.v / fps) * (deltax / delta)
-            self.rect.y += (self.v / fps) * (deltay / delta)
-            self.formspr.rect.y += (self.v / fps) * (deltay / delta)
+            self.rect.x += (self.v / fps) * (deltax / delta) * self.effects_dict["speed_coeff"]
+            self.formspr.rect.x += (self.v / fps) * (deltax / delta) * self.effects_dict["speed_coeff"]
+            self.rect.y += (self.v / fps) * (deltay / delta) * self.effects_dict["speed_coeff"]
+            self.formspr.rect.y += (self.v / fps) * (deltay / delta) * self.effects_dict["speed_coeff"]
+        if self.effect_coldown == 0:
+            self.get_damage(self.effects_dict["hp_reduction_per_sec"], 0, "eff")
+            self.effect_coldown += 1
+        else:
+            self.effect_coldown = (self.effect_coldown + 1) % 12
+            self.cur_hp -= (self.effects_dict["hp_reduction_per_sec"] *
+                            self.effects_dict["dmg_get_from_debuffs_coeff"] / fps)
+        for effects in self.cur_effects:
+            for tier in self.cur_effects[effects]:
+                if self.cur_effects[effects][tier] is not None and self.cur_effects[effects][tier] <= 0:
+                    print(self.cur_effects[effects][tier], self.cur_effects)
+                    self.cur_effects[effects][tier] = None
+                    for i in effect_list[effects][tier]:
+                        if i != "hp_reduction_per_sec":
+                            self.effects_dict[i] /= effect_list[effects][tier][i]
+                        else:
+                            self.effects_dict[i] -= effect_list[effects][tier][i]
+                elif self.cur_effects[effects][tier] is not None:
+                    self.cur_effects[effects][tier] -= 1
 
     def get_damage(self, amount, time, weap_connected_to_class):
-        if not self.dmg_timer:
-            real_dmg = randint(int(0.9 * amount), int(1.1 * amount))
-            damage.add_to_showlist(damage_col["weapons"][weap_connected_to_class],
+        if amount != 0 and not self.dmg_timer:
+            if weap_connected_to_class != "eff":
+                real_dmg = round(randint(int(0.9 * amount), int(1.1 * amount)) * self.effects_dict["dmg_get_coeff"], 1)
+
+                damage.add_to_showlist(damage_col["weapons"][weap_connected_to_class],
                                    self.rect.x, self.rect.y - self.rect.h, real_dmg)
-            self.cur_hp -= real_dmg
+                self.cur_hp -= real_dmg
+            else:
+                self.cur_hp -= amount * self.effects_dict["dmg_get_from_debuffs_coeff"] / fps
+                real_dmg = amount * self.effects_dict["dmg_get_from_debuffs_coeff"] / 5
+                damage.add_to_showlist(damage_col["weapons"][weap_connected_to_class],
+                                       self.rect.x, self.rect.y - self.rect.h, real_dmg, deltax=(-20, 20), deltay=(-100, 100))
             self.dmg_timer += time
+
+    def get_effect(self, effs, effs_len):
+        if effs:
+            for i in range(len(effs)):
+                if self.cur_effects[effs[i][0]][effs[i][1]] is not None:
+                    self.cur_effects[effs[i][0]][effs[i][1]] = max(self.cur_effects[effs[i][0]][effs[i][1]], effs_len[i] * fps)
+                else:
+                    if (len(effect_list[effs[i][0]]) == 1 or not
+                            any([(True if (not effect_list[effs[i][0]][tier] and int(tier[-1]) > int(effs[i][1][-1]))
+                            else False) for tier in effect_list[effs[i][0]]])):
+                        self.cur_effects[effs[i][0]][effs[i][1]] = effs_len[i] * fps
+                        for j in effect_list[effs[i][0]][effs[i][1]]:
+                            if j != "hp_reduction_per_sec":
+                                self.effects_dict[j] *= effect_list[effs[i][0]][effs[i][1]][j]
+                            else:
+                                self.effects_dict[j] += effect_list[effs[i][0]][effs[i][1]][j]
 
     def kill(self):
         self.formspr.kill()
@@ -723,24 +907,27 @@ class Ranger_weapon(pygame.sprite.Sprite):
         self.y = rect.y
         self.w = rect.w
         self.h = rect.h
-        dt = self.workl.apply(self.x, self.y, side, self.rect, pygame.mouse.get_pos(), self.position, fps,
+        data = self.workl.apply(self.x, self.y, side, self.rect, pygame.mouse.get_pos(), self.position, fps,
                               self.is_attacking, self.cur_atk_type)
-        if "pos" in dt:
-            self.position = dt["pos"]
-        if "image" in dt:
-            self.image = dt["image"]
-        if "is_attacking" in dt:
-            self.is_attacking = dt["is_attacking"]
-        if "cur_atk_type" in dt:
-            self.cur_atk_type = dt["cur_atk_type"]
-        if "proj" in dt:
-            proj = Projectile(dt["proj"]["armor_pen"], dt["proj"]["proj_speed"], dt["proj"]["dmg"], dt["proj"]["pos"],
-                           dt["proj"]["proj_img"], dt["proj"]["lifetime"] * fps, dt["proj"]["angle"], "player",
-                           do_splash=dt["proj"].get("splash_coeff", 0), splash_img=dt["proj"].get("splash_img", None),
-                           splash_size=dt["proj"].get("size", 0), size_growth=dt["proj"].get("size_growth", 1),
-                           speed_growth=dt["proj"].get("speed_growth", 1), dmg_g=dt["proj"].get("dmg_g", 1),
-                           pen_g=dt["proj"].get("pen_g", 1))
-            anim = Animation("reload_animation", fps / dt["proj"]["ats"], self.x + self.w // 2, self.y - self.h)
+        if "pos" in data:
+            self.position = data["pos"]
+        if "image" in data:
+            self.image = data["image"]
+        if "is_attacking" in data:
+            self.is_attacking = data["is_attacking"]
+        if "cur_atk_type" in data:
+            self.cur_atk_type = data["cur_atk_type"]
+        if "proj" in data:
+            for dt in data["proj"]:
+                proj = Projectile(dt["armor_pen"], dt["proj_speed"], dt["dmg"], dt["pos"],
+                           dt["proj_img"], dt["lifetime"] * fps, dt["angle"], "player",
+                           do_splash=dt.get("splash_coeff", 0), splash_img=dt.get("splash_img", None),
+                           splash_size=dt.get("size", 0), size_growth=dt.get("size_growth", 1),
+                           speed_growth=dt.get("speed_growth", 1), dmg_g=dt.get("dmg_g", 1),
+                           pen_g=dt.get("pen_g", 1), proj_eff=dt.get("proj_effects", None),
+                           eff_len=dt.get("effects_len", None), splash_eff=dt.get("splash_effects", None),
+                           splash_eff_len=dt.get("splash_effect_len", None), ignore_walls=dt.get("ignoring", False))
+            anim = Animation("reload_animation", fps / data["proj"][0]["ats"], self.x + self.w // 2, self.y - self.h)
 
     def base_attack(self):
         if not self.is_attacking and self.cur_atk_type == "base":
@@ -794,7 +981,8 @@ class Animation(pygame.sprite.Sprite):
 
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, lives, speed, dmg, cords, img, lifetime, angle, team, do_splash=0, splash_img=None,
-                 splash_size=0, size_growth=1, speed_growth=1, dmg_g=1, pen_g=1):
+                 splash_size=0, size_growth=1, speed_growth=1, dmg_g=1, pen_g=1, proj_eff=None, eff_len=None,
+                 ignore_walls=False, splash_eff=None, splash_eff_len=None):
         super().__init__(proj_gr, alls, transition_killable)
         wcs = player.inf()
         self.image = pygame.transform.rotate(img, -angle)
@@ -809,6 +997,8 @@ class Projectile(pygame.sprite.Sprite):
         self.hits = 0
         self.pen = lives
         self.speed = speed
+        self.proj_eff = proj_eff
+        self.eff_len = eff_len
         self.team = team
         self.block = []
         self.ds = do_splash
@@ -818,6 +1008,9 @@ class Projectile(pygame.sprite.Sprite):
         self.speed_growth = speed_growth
         self.dmg_growth = dmg_g
         self.penetration_growth = pen_g
+        self.ignore_walls = ignore_walls
+        self.splash_eff = splash_eff
+        self.splash_eff_len = splash_eff_len
 
     def apply(self):
         self.lifetimer -= 1
@@ -839,15 +1032,19 @@ class Projectile(pygame.sprite.Sprite):
         if ret:
             for i in ret:
                 if i not in self.block and self.hits <= self.pen:
-                    i.get_damage(self.dmg * (self.speed_growth ** ((self.lifetime - self.lifetimer) / fps)),
+                    i.get_damage(self.dmg * (self.dmg_growth ** ((self.lifetime - self.lifetimer) / fps)),
                                  0, "ranger")
+                    i.get_effect(self.proj_eff, self.eff_len)
                     self.block.append(i)
                     self.hits += 1
-        if self.pen <= self.hits or any([pygame.sprite.spritecollideany(self.wcs, walls[i]) for i in walls]) or self.lifetimer <= 0:
+        if (self.pen <= self.hits or
+                (any([pygame.sprite.spritecollideany((self.wcs if i != "hu" else
+                FormalRect(self.wcs.rect.x, self.wcs.rect.y + 60, self.wcs.rect.w, self.wcs.rect.h)), walls[i]) for i in walls]) and not self.ignore_walls)
+                or self.lifetimer <= 0):
             if self.ds:
                 s = Splash(self.dmg * (self.dmg_growth ** ((self.lifetime - self.lifetimer) / fps)) * self.ds,
                            [self.rect.x + self.rect.w // 2, self.rect.y + self.rect.h // 2],
-                           self.splash_img, self.splash_size, self.team)
+                           self.splash_img, self.splash_size, self.team, self.splash_eff, self.splash_eff_len)
             self.kill()
 
     def chpos(self, x, y):
@@ -856,7 +1053,7 @@ class Projectile(pygame.sprite.Sprite):
 
 
 class Splash(pygame.sprite.Sprite):
-    def __init__(self, dmg, cords, img, size, team):
+    def __init__(self, dmg, cords, img, size, team, eff, eff_len):
         super().__init__(proj_gr, alls, transition_killable)
         self.dmg = dmg
         self.lifetime = splash_lifetime_const * fps
@@ -869,6 +1066,8 @@ class Splash(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = self.center[0] - self.rect.w // 2, self.center[1] - self.rect.h // 2
         self.team = team
         self.timer = 0
+        self.eff = eff
+        self.eff_len = eff_len
         self.block = []
 
     def apply(self):
@@ -880,7 +1079,8 @@ class Splash(pygame.sprite.Sprite):
         if ret:
             for i in ret:
                 if i not in self.block:
-                    i.get_damage(self.dmg, 0, "ranger")
+                    i.get_damage(self.dmg, 0, "splash")
+                    i.get_effect(self.eff, self.eff_len)
                     self.block.append(i)
         if self.timer > self.lifetime:
             self.kill()
@@ -895,10 +1095,10 @@ class Damage():
         self.damage_show_list = []
         self.max_time = 60
 
-    def add_to_showlist(self, col, x, y, n):
+    def add_to_showlist(self, col, x, y, n, deltax=(0, 0), deltay=(0, 0)):
         font = pygame.font.Font(None, 40)
         text = font.render(str(-n), True, col)
-        self.damage_show_list.append([text, (x, y), self.max_time])
+        self.damage_show_list.append([text, (x + randint(*deltax), y + randint(*deltay)), self.max_time])
 
     def apply(self):
         x = self.damage_show_list
@@ -931,7 +1131,8 @@ if __name__ == "__main__":
     player = None
     weapon = None
 
-    sprite_images = {'walls': {'hu': get_image('Other/Wall_brick_horizontal.png', False),
+    sprite_images = {
+                     'walls': {'hu': get_image('Other/Wall_brick_horizontal.png', False),
                                'hd': pygame.transform.rotate(get_image('Other/Wall_brick_horizontal.png', False), 180),
                                'vl': get_image('Other/Wall_brick_vertical.png', False),
                                'vr': pygame.transform.rotate(get_image('Other/Wall_brick_vertical.png', False), 180)},
@@ -1025,7 +1226,23 @@ if __name__ == "__main__":
                                                                   True), 1, 0),
                      'alt_proj': pygame.transform.flip(pygame.transform.scale_by(get_image('Ranger/Ammo/Rail_minigun_ray.png',
                                                                  True), 2), 1, 0),
-                     'base_splash': get_image('Ranger/Splashes/Rail_minigun_bullet_splash.png', True)}}}
+                     'base_splash': get_image('Ranger/Splashes/Rail_minigun_bullet_splash.png', True)},
+                'shotgun':
+                    {'default': [get_image('Ranger/Shotgun.png', True),
+                                 pygame.transform.flip(get_image('Ranger/Shotgun.png', True), 1, 0)],
+                     'hold': [get_image('Ranger/Shotgun.png', True),
+                              pygame.transform.flip(get_image('Ranger/Shotgun.png', True), 1, 0)],
+                     'base_attack': [get_image('Ranger/Shotgun.png', True),
+                                     pygame.transform.flip(get_image('Ranger/Shotgun.png', True), 1, 0)],
+                     'base_proj': pygame.transform.flip(get_image('Ranger/Ammo/Shotgun_bullet.png', True), 1, 0)},
+                'plasma_flow':
+                    {'default': [get_image('Ranger/Plasma_flow.png', True),
+                                 pygame.transform.flip(get_image('Ranger/Plasma_flow.png', True), 1, 0)],
+                     'hold': [get_image('Ranger/Plasma_flow.png', True),
+                              pygame.transform.flip(get_image('Ranger/Plasma_flow.png', True), 1, 0)],
+                     'base_attack': [get_image('Ranger/Plasma_flow.png', True),
+                                     pygame.transform.flip(get_image('Ranger/Plasma_flow.png', True), 1, 0)],
+                     'base_proj': pygame.transform.flip(get_image('Ranger/Ammo/Plasma_flow_ray.png', True), 1, 0)}}}
     damage = Damage()
     screen_x = -levels_size[1][0] // 2 + SX // 2
     screen_y = -levels_size[1][1] // 2 + SY // 2
@@ -1100,7 +1317,7 @@ if __name__ == "__main__":
                             player = Player("warrior")
                             weapon = Warrior_weapon(cur_rank, cur_weap, weapon_class)
                         if cur_class == "ranger":
-                            cur_weap = "rail_minigun"
+                            cur_weap = "handgun"
                             cur_rank = "SR"
                             player = Player("ranger")
                             weapon = Ranger_weapon(cur_rank, cur_weap)

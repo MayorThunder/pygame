@@ -1,3 +1,5 @@
+from random import randint
+
 import pygame
 from math import asin, degrees
 
@@ -39,64 +41,134 @@ class Stagnum_blade():
 
 
 class Handgun():
-    def apply(self, x, y, side, rect, mpos, position, weapon, base_ats, alt_ats, timer, fps,
-            is_attacking, sprite_images, CAT, c_timer, max_ch_time, ch_to):
+    def __init__(self, data, ims, rank):
+        self.reload_timer = 0
+        self.data = data
+        self.images = ims
+        self.rank = rank
+
+    def apply(self, x, y, side, rect, mpos, position, fps, is_attacking, *args):
         proj = None
         coy = 65
         cox1 = 60
         cox2 = 45
         rect.x = x - rect.w + (cox1 if not side else cox2)
         rect.y = y - rect.h + coy
+        center = (rect.x + rect.w // 2, rect.y + rect.h // 3)
         mpos_x, mpos_y = mpos
-        angle = degrees(asin((mpos_y - rect.y - rect.h // 2) / ((mpos_x - rect.x - rect.w // 2)
-                                                                ** 2 + (mpos_y - rect.y - rect.h // 2) ** 2) ** 0.5))
+        angle = degrees(asin((mpos_y - center[1]) / ((mpos_x - center[0])
+                                                     ** 2 + (mpos_y - center[1]) ** 2) ** 0.5))
         real_angle = (angle if not side else -angle + 180)
         if not side:
             angle = -angle
-        image = pygame.transform.rotate(sprite_images["ran_weapons"][weapon][position][1 if side else 0], angle)
-        if is_attacking and timer == 0:
-            proj = {"angle": real_angle, "pos": (rect.x + (rect.w // 2 if side else 0), rect.y + rect.h // 4)}
-            timer += 1
-        elif 0 < timer < fps / base_ats:
-            timer += 1
+        image = pygame.transform.rotate(self.images[position][1 if side else 0], angle)
+        if is_attacking and self.reload_timer == 0:
+            proj = [{"angle": real_angle, "pos": center,
+                     "dmg": self.data["base"][self.rank]["dmg"], "ats": self.data["base"][self.rank]["ats"],
+                     "armor_pen": 1,
+                     "proj_speed": self.data["base"][self.rank]["proj_speed"],
+                     "lifetime": self.data["base"]["lifetime"], "proj_img": self.images["base_proj"]}]
+            self.reload_timer += 1
+        elif 0 < self.reload_timer < fps / self.data["base"][self.rank]["ats"]:
+            self.reload_timer += 1
         else:
-            timer = 0
+            self.reload_timer = 0
             is_attacking = False
             position = "hold"
-        ret = {"side": side, "pos": position, "timer": timer, "image": image, "is_attacking": is_attacking}
+        ret = {"side": side, "pos": position, "image": image, "is_attacking": is_attacking}
         if proj:
-            ret["base_proj"] = proj
+            ret["proj"] = proj
+        return ret
+
+
+class Shotgun():
+    def __init__(self, data, ims, rank):
+        self.reload_timer = 0
+        self.data = data
+        self.images = ims
+        self.rank = rank
+        self.delta = self.data["base"][self.rank]["width"] / (self.data["base"][self.rank]["bullets"] - 1)
+
+    def apply(self, x, y, side, rect, mpos, position, fps, is_attacking, *args):
+        proj = None
+        coy = 70
+        cox1 = 110
+        cox2 = 50
+        rect.x = x - rect.w + (cox1 if not side else cox2)
+        rect.y = y - rect.h + coy
+        center = (rect.x + rect.w // 2, rect.y + rect.h // 2)
+        mpos_x, mpos_y = mpos
+        angle = degrees(asin((mpos_y - center[1]) / ((mpos_x - center[0])
+                                                     ** 2 + (mpos_y - center[1]) ** 2) ** 0.5))
+        real_angle = (angle if not side else -angle + 180)
+        if not side:
+            angle = -angle
+        image = pygame.transform.rotate(self.images[position][1 if side else 0], angle)
+        if is_attacking and self.reload_timer == 0:
+            proj = []
+            ef_len = [self.data["base"][self.rank]["effect_len"][i] for i in self.data["base"]["attack_effect"].keys()]
+            for i in range(self.data["base"][self.rank]["bullets"]):
+                proj.append({"angle": real_angle - (self.data["base"][self.rank]["width"] // 2) + self.delta * i, "pos": center,
+                        "dmg": self.data["base"][self.rank]["dmg"], "armor_pen": 1,
+                        "proj_speed": self.data["base"][self.rank]["proj_speed"], "ats": self.data["base"][self.rank]["ats"],
+                        "lifetime": self.data["base"]["lifetime"], "proj_img": self.images["base_proj"],
+                        "dmg_g": self.data["base"]["dmg_growth"],
+                        "proj_effects": [[i, j] for (i, j) in self.data["base"]["attack_effect"].items()],
+                        "effects_len": ef_len})
+            self.reload_timer += 1
+        elif 0 < self.reload_timer < fps / self.data["base"][self.rank]["ats"]:
+            self.reload_timer += 1
+        else:
+            self.reload_timer = 0
+            is_attacking = False
+            position = "hold"
+        ret = {"side": side, "pos": position, "image": image, "is_attacking": is_attacking}
+        if proj:
+            ret["proj"] = proj
         return ret
 
 
 class Volcano():
-    def apply(self, x, y, side, rect, mpos, position, weapon, base_ats, alt_ats, timer, fps,
-            is_attacking, sprite_images, CAT, c_timer, max_ch_time, ch_to):
+    def __init__(self, data, ims, rank):
+        self.reload_timer = 0
+        self.data = data
+        self.images = ims
+        self.rank = rank
+
+    def apply(self, x, y, side, rect, mpos, position, fps, is_attacking, *args):
         proj = None
-        coy = 65
-        cox1 = 60
-        cox2 = 45
+        coy = 85
+        cox1 = 110
+        cox2 = 50
         rect.x = x - rect.w + (cox1 if not side else cox2)
         rect.y = y - rect.h + coy
+        center = (rect.x + rect.w // 2, rect.y + rect.h // 2)
         mpos_x, mpos_y = mpos
-        angle = degrees(asin((mpos_y - rect.y - rect.h // 2) / ((mpos_x - rect.x - rect.w // 2)
-                                                                ** 2 + (mpos_y - rect.y - rect.h // 2) ** 2) ** 0.5))
+        angle = degrees(asin((mpos_y - center[1]) / ((mpos_x - center[0])
+                                                     ** 2 + (mpos_y - center[1]) ** 2) ** 0.5))
         real_angle = (angle if not side else -angle + 180)
         if not side:
             angle = -angle
-        image = pygame.transform.rotate(sprite_images["ran_weapons"][weapon][position][1 if side else 0], angle)
-        if is_attacking and timer == 0:
-            proj = {"angle": real_angle, "pos": (rect.x + (rect.w // 2 if side else 0), rect.y + rect.h // 4)}
-            timer += 1
-        elif 0 < timer < fps / base_ats:
-            timer += 1
+        image = pygame.transform.rotate(self.images[position][1 if side else 0], angle)
+        if is_attacking and self.reload_timer == 0:
+            real_angle = real_angle + randint(-self.data["base"]["angle"] * 10, self.data["base"]["angle"] * 10) / 10
+            ef_len = [self.data["base"][self.rank]["effect_len"][i] for i in self.data["base"]["attack_effect"].keys()]
+            proj = [{"angle": real_angle, "pos": center,
+                    "dmg": self.data["base"][self.rank]["dmg"], "armor_pen": 1,
+                    "proj_speed": self.data["base"][self.rank]["proj_speed"], "ats": self.data["base"][self.rank]["ats"],
+                    "lifetime": self.data["base"]["lifetime"], "proj_img": self.images["base_proj"],
+                    "proj_effects": [[i, j] for (i, j) in self.data["base"]["attack_effect"].items()],
+                    "effects_len": ef_len}]
+            self.reload_timer += 1
+        elif 0 < self.reload_timer < fps / self.data["base"][self.rank]["ats"]:
+            self.reload_timer += 1
         else:
-            timer = 0
+            self.reload_timer = 0
             is_attacking = False
             position = "hold"
-        ret = {"side": side, "pos": position, "timer": timer, "image": image, "is_attacking": is_attacking}
+        ret = {"side": side, "pos": position, "image": image, "is_attacking": is_attacking}
         if proj:
-            ret["base_proj"] = proj
+            ret["proj"] = proj
         return ret
 
 
@@ -126,14 +198,16 @@ class Moon_blessing():
         image = pygame.transform.rotate(self.images[position][1 if side else 0], angle)
         if CAT != "changing":
             if is_attacking and self.reload_timer == 0:
-                proj = {"angle": real_angle, "pos": center,
+                ef_len = self.data[CAT][self.rank]["effect_len"]
+                proj = [{"angle": real_angle, "pos": center,
                         "dmg": self.data[CAT][self.rank]["dmg"], "armor_pen": self.data[CAT][self.rank]["armor_pen"],
                         "proj_speed": self.data[CAT][self.rank]["proj_speed"], "ats": self.data[CAT][self.rank]["ats"],
                         "lifetime": self.data[CAT]["lifetime"],
                         "proj_img": self.images[f"{CAT}_proj"], "size_growth": self.data[CAT].get("size_growth", 1),
                         "speed_growth": self.data[CAT].get("speed_growth", 1),
                         "dmg_g": self.data[CAT].get("dmg_growth", 1),
-                        "pen_g": self.data[CAT].get("penetration_growth", 1)}
+                        "pen_g": self.data[CAT].get("penetration_growth", 1), "proj_effects": [[i, j] for (i, j) in self.data[CAT]["attack_effect"].items()],
+                        "effects_len": [ef_len]}]
                 self.reload_timer += 1
             elif 0 < self.reload_timer < fps / (self.data["base"][self.rank]["ats"] if CAT == "base" else
             self.data["alt"][self.rank]["ats"]):
@@ -167,8 +241,7 @@ class Planetar_bomber():
         self.rank = rank
         self.ch_to = "alt"
 
-    def apply(self, x, y, side, rect, mpos, position, fps,
-            is_attacking, CAT):
+    def apply(self, x, y, side, rect, mpos, position, fps, is_attacking, CAT):
         proj = None
         coy = 60
         cox1 = 70
@@ -189,16 +262,22 @@ class Planetar_bomber():
         image = pygame.transform.rotate(self.images[position][1 if side else 0], angle)
         if CAT != "changing":
             if is_attacking and self.reload_timer == 0:
-                proj = {"angle": real_angle, "pos": center,
+                ef_len = [self.data[CAT][self.rank]["effect_len"][i] for i in
+                          self.data[CAT]["attack_effect"].keys()]
+                spl_len = [self.data[CAT][self.rank]["effect_len"][i] * self.data[CAT]["splash_effect_len"][i] for i in
+                          self.data[CAT]["splash_effect"].keys()]
+                proj = [{"angle": real_angle, "pos": center,
                         "dmg": self.data[CAT][self.rank]["dmg"], "armor_pen": 1,
                         "proj_speed": self.data[CAT][self.rank]["proj_speed"], "ats": self.data[CAT][self.rank]["ats"],
                         "lifetime": self.data[CAT]["lifetime"], "splash_coeff": self.data[CAT]["splash_coeff"],
                         "size": self.data[CAT][self.rank]["splash_size"], "proj_img": self.images[f"{CAT}_proj"],
-                        "splash_img": self.images[f"{CAT}_splash"], "size_growth": self.data[CAT].get("size_growth", 1),
-                        "dmg_g": self.data[CAT].get("dmg_growth", 1)}
+                        "splash_img": self.images[f"{CAT}_splash"], "speed_growth": self.data[CAT]["speed_growth"],
+                        "proj_effects": [[i, j] for (i, j) in self.data[CAT]["attack_effect"].items()],
+                        "effects_len": ef_len,
+                        "splash_effects": [[i, j] for (i, j) in self.data[CAT]["splash_effect"].items()],
+                        "splash_effect_len": spl_len}]
                 self.reload_timer += 1
-            elif 0 < self.reload_timer < fps / (self.data["base"][self.rank]["ats"] if CAT == "base" else
-            self.data["alt"][self.rank]["ats"]):
+            elif 0 < self.reload_timer < fps / self.data[CAT][self.rank]["ats"]:
                 self.reload_timer += 1
             else:
                 self.reload_timer = 0
@@ -227,6 +306,7 @@ class Rail_minigun():
         self.reload_timer = 0
         self.change_timer = 0
         self.data = data
+        print(self.data)
         self.images = ims
         self.rank = rank
         self.ch_to = "alt"
@@ -248,13 +328,15 @@ class Rail_minigun():
         image = pygame.transform.rotate(self.images[position][1 if side else 0], angle)
         if CAT != "changing":
             if is_attacking and self.reload_timer == 0:
-                proj = {"angle": real_angle, "pos": (center[0], center[1] + rect.h // 4),
+                proj = [{"angle": real_angle, "pos": (center[0], center[1] + rect.h // 4),
                         "dmg": self.data[CAT][self.rank]["dmg"], "armor_pen": self.data[CAT][self.rank].get("armor_pen", 1),
                         "proj_speed": self.data[CAT][self.rank]["proj_speed"], "ats": self.data[CAT][self.rank]["ats"],
                         "lifetime": self.data[CAT]["lifetime"],
                         "splash_coeff": self.data[CAT].get("splash_coeff", 0),
                         "size": self.data[CAT][self.rank].get("splash_size", 0), "proj_img": self.images[f"{CAT}_proj"],
-                        "splash_img": self.images.get(f"{CAT}_splash", None)}
+                        "splash_img": self.images.get(f"{CAT}_splash", None),
+                        "size_growth": self.data[CAT].get("size_growth", 1),
+                        "dmg_g": self.data[CAT].get("damage_growth", 1)}]
                 self.reload_timer += 1
             elif 0 < self.reload_timer < fps / (self.data["base"][self.rank]["ats"] if CAT == "base" else
             self.data["alt"][self.rank]["ats"]):
@@ -274,6 +356,51 @@ class Rail_minigun():
                 CAT = "alt"
             self.change_timer = 0
         ret = {"pos": position, "image": image, "is_attacking": is_attacking, "cur_atk_type": CAT}
+        if proj:
+            ret["proj"] = proj
+        return ret
+
+
+class Plasma_flow():
+    def __init__(self, data, ims, rank):
+        self.reload_timer = 0
+        self.data = data
+        self.images = ims
+        self.rank = rank
+
+    def apply(self, x, y, side, rect, mpos, position, fps, is_attacking, *args):
+        proj = None
+        coy = 85
+        cox1 = 110
+        cox2 = 50
+        rect.x = x - rect.w + (cox1 if not side else cox2)
+        rect.y = y - rect.h + coy
+        center = (rect.x + rect.w // 2, rect.y + rect.h // 3)
+        mpos_x, mpos_y = mpos
+        angle = degrees(asin((mpos_y - center[1]) / ((mpos_x - center[0])
+                                                     ** 2 + (mpos_y - center[1]) ** 2) ** 0.5))
+        real_angle = (angle if not side else -angle + 180)
+        if not side:
+            angle = -angle
+        image = pygame.transform.rotate(self.images[position][1 if side else 0], angle)
+        if is_attacking and self.reload_timer == 0:
+            ef_len = [self.data["base"][self.rank]["effect_len"][i] for i in self.data["base"]["attack_effect"].keys()]
+            proj = [{"angle": real_angle, "pos": center,
+                    "dmg": self.data["base"][self.rank]["dps"] / fps, "armor_pen": self.data["base"][self.rank]["armor_pen"],
+                    "proj_speed": self.data["base"][self.rank]["proj_speed"], "ats": fps,
+                    "lifetime": self.data["base"]["lifetime"], "proj_img": self.images["base_proj"],
+                    "speed_growth": self.data["base"]["speed_growth"], "size_growth": self.data["base"]["size_growth"],
+                    "dmg_growth": self.data["base"]["dmg_growth"],
+                    "proj_effects": [[i, j] for (i, j) in self.data["base"]["attack_effect"].items()],
+                    "effects_len": ef_len, "ignoring": True}]
+            self.reload_timer += 1
+        elif 0 < self.reload_timer < 1:
+            self.reload_timer += 1
+        else:
+            self.reload_timer = 0
+            is_attacking = False
+            position = "hold"
+        ret = {"side": side, "pos": position, "image": image, "is_attacking": is_attacking}
         if proj:
             ret["proj"] = proj
         return ret
